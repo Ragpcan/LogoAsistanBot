@@ -46,6 +46,12 @@ web_users.json
 custom_reports.json
 report_history.json
 app_permissions.json
+invoice_payment_status.json
+
+# Node.js & WhatsApp Bridge
+node_modules/
+auth_session/
+*.session
 
 # Windows files
 Thumbs.db

@@ -494,6 +494,165 @@
     ::-webkit-scrollbar-track { background: transparent; }
     ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
     ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+
+    /* ═══════════ MODALS ═══════════ */
+    .erp-modal-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(15, 23, 42, 0.65);
+      backdrop-filter: blur(4px);
+      z-index: 9999;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+    .erp-modal-overlay.active { display: flex; animation: fadeIn 0.15s ease; }
+    .erp-modal {
+      background: #ffffff;
+      border-radius: 14px;
+      width: 100%;
+      max-width: 650px;
+      max-height: 90vh;
+      box-shadow: 0 20px 40px rgba(0,0,0,0.25);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      animation: slideUp 0.2s ease;
+    }
+    .erp-modal-lg { max-width: 950px; }
+    @keyframes slideUp {
+      from { opacity: 0; transform: translateY(16px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    .erp-modal-header {
+      padding: 16px 22px;
+      background: #f8fafc;
+      border-bottom: 1px solid #e2e8f0;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .erp-modal-header h3 {
+      font-size: 1.05rem;
+      font-weight: 800;
+      color: var(--secondary);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .erp-modal-close {
+      background: none;
+      border: none;
+      font-size: 1.25rem;
+      color: #94a3b8;
+      cursor: pointer;
+      padding: 4px 8px;
+      border-radius: 6px;
+      transition: all 0.15s;
+    }
+    .erp-modal-close:hover { background: #fee2e2; color: #ef4444; }
+    .erp-modal-body { padding: 20px 22px; overflow-y: auto; flex: 1; }
+    .erp-modal-footer {
+      padding: 14px 22px;
+      background: #f8fafc;
+      border-top: 1px solid #e2e8f0;
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      gap: 10px;
+    }
+
+    /* ═══════════ BADGES ═══════════ */
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      padding: 3px 9px;
+      border-radius: 6px;
+      font-size: 0.75rem;
+      font-weight: 700;
+      letter-spacing: 0.3px;
+      white-space: nowrap;
+      cursor: default;
+    }
+    .badge-odendi { background: #dcfce7; color: #15803d; border: 1px solid #86efac; }
+    .badge-odenmedi { background: #fee2e2; color: #b91c1c; border: 1px solid #fca5a5; }
+    .badge-kismi { background: #fef3c7; color: #b45309; border: 1px solid #fde68a; }
+    .badge-overdue { background: #fef2f2; color: #dc2626; font-weight: 800; }
+    .badge-today { background: #fefce8; color: #ca8a04; font-weight: 800; }
+    .badge-future { background: #f0fdf4; color: #16a34a; font-weight: 700; }
+    .badge-clickable { cursor: pointer; transition: transform 0.1s, box-shadow 0.1s; }
+    .badge-clickable:hover { transform: scale(1.05); box-shadow: 0 2px 6px rgba(0,0,0,0.1); }
+
+    /* ═══════════ VADE FİLTRELEME BARI ═══════════ */
+    .vade-filter-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+      gap: 12px;
+      background: #fff;
+      padding: 14px 18px;
+      border-radius: 12px;
+      border: 1px solid #e2e8f0;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+      margin-bottom: 16px;
+      align-items: end;
+    }
+    .vade-filter-item { display: flex; flex-direction: column; gap: 4px; }
+    .vade-filter-item label { font-size: 0.72rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase; }
+    .vade-input, .vade-select {
+      padding: 7px 10px;
+      border-radius: 8px;
+      border: 1px solid #cbd5e1;
+      font-size: 0.8rem;
+      font-family: inherit;
+      background: #f8fafc;
+      outline: none;
+      transition: all 0.15s;
+    }
+    .vade-input:focus, .vade-select:focus { border-color: var(--primary); background: #fff; }
+
+    /* ═══════════ HIZLI İŞLEM BUTONLARI ═══════════ */
+    .btn-icon-group { display: flex; gap: 4px; align-items: center; }
+    .btn-channel {
+      width: 28px;
+      height: 28px;
+      border-radius: 6px;
+      border: 1px solid #e2e8f0;
+      background: #fff;
+      color: #64748b;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: all 0.15s;
+      font-size: 0.82rem;
+    }
+    .btn-channel:hover { transform: translateY(-2px); box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+    .btn-wa:hover { background: #25d366; color: #fff; border-color: #25d366; }
+    .btn-sms:hover { background: #3b82f6; color: #fff; border-color: #3b82f6; }
+    .btn-tg:hover { background: #0088cc; color: #fff; border-color: #0088cc; }
+    .btn-mail:hover { background: #ea4335; color: #fff; border-color: #ea4335; }
+
+    /* ═══════════ MODAL TABS ═══════════ */
+    .modal-tabs { display: flex; gap: 6px; border-bottom: 2px solid #e2e8f0; margin-bottom: 16px; }
+    .modal-tab-btn {
+      padding: 8px 16px;
+      border: none;
+      background: none;
+      font-weight: 700;
+      font-size: 0.82rem;
+      color: var(--text-muted);
+      cursor: pointer;
+      border-bottom: 2px solid transparent;
+      margin-bottom: -2px;
+      transition: all 0.15s;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .modal-tab-btn:hover { color: var(--primary); }
+    .modal-tab-btn.active { color: var(--primary); border-bottom-color: var(--primary); font-weight: 800; }
   </style>
 </head>
 <body>
@@ -589,6 +748,7 @@
         <i class="fa-solid fa-chevron-right chevron-icon"></i>
       </div>
       <div class="submenu-container">
+        <a class="nav-item erp-menu-link" onclick="switchErpView('view-invoice-due-dates', this)" style="color:#38bdf8;font-weight:700;"><i class="fa-solid fa-calendar-check" style="margin-right:6px;"></i>Fatura Vade & Borç Takibi</a>
         <a class="nav-item erp-menu-link" onclick="switchErpView('view-avg-maturity', this)">Cari Ortalama Vade Raporu</a>
         <a class="nav-item erp-menu-link" onclick="switchErpView('view-vade-takip', this)">Vade Takip Analizi</a>
         <a class="nav-item erp-menu-link" onclick="switchErpView('view-gider-takip', this)">Aylık Gider & Fatura Takibi</a>
@@ -644,6 +804,7 @@
         <i class="fa-solid fa-chevron-right chevron-icon"></i>
       </div>
       <div class="submenu-container">
+        <a class="nav-item erp-menu-link" onclick="switchErpView('view-whatsapp-bridge', this)" style="color:#25d366;font-weight:700;"><i class="fa-brands fa-whatsapp" style="margin-right:6px;"></i>WhatsApp Web Entegrasyonu</a>
         <a class="nav-item erp-menu-link" onclick="switchErpView('view-sms', this)">İşlemler (SMS / E-Posta / PDF)</a>
         <a class="nav-item erp-menu-link" onclick="switchErpView('view-live-console', this)">Canlı Bot Konsolu</a>
       </div>
@@ -680,6 +841,12 @@
           <button class="mini-btn" onclick="setDashDate('month')">Ay Başı</button>
           <button class="premium-btn" style="padding:4px 10px;font-size:0.75rem;" onclick="loadDashboardData()"><i class="fa-solid fa-rotate"></i> Yenile</button>
         </div>
+        <button class="premium-btn" style="background:#0284c7; padding:6px 12px; font-size:0.75rem;" onclick="switchErpView('view-invoice-due-dates')">
+          <i class="fa-solid fa-calendar-check"></i> Vade Takibi
+        </button>
+        <button class="premium-btn" style="background:#16a34a; padding:6px 12px; font-size:0.75rem;" onclick="switchErpView('view-whatsapp-bridge')">
+          <i class="fa-brands fa-whatsapp"></i> WhatsApp
+        </button>
         <div class="header-user">
           <div class="user-avatar"><i class="fa-solid fa-user"></i></div>
           <span id="portalFirmInfo">Firma: 001 | Dönem: 01</span>
@@ -948,6 +1115,16 @@
       </div>
     </div>
 
+    <!-- ════════════════════════════════════════════════════════ -->
+    <!-- VIEW: FATURA VADE & BORÇ TAKİBİ                          -->
+    <!-- ════════════════════════════════════════════════════════ -->
+    <div id="view-invoice-due-dates" class="erp-view-container"></div>
+
+    <!-- ════════════════════════════════════════════════════════ -->
+    <!-- VIEW: TOKENSIZ WHATSAPP WEB ENTEGRASYONU                 -->
+    <!-- ════════════════════════════════════════════════════════ -->
+    <div id="view-whatsapp-bridge" class="erp-view-container"></div>
+
   </main>
 
   <script src="js/erp-queries.js?v=20260829"></script>
@@ -993,6 +1170,199 @@
         if (basInput) basInput.value = firstDay;
       }
       loadDashboardData();
+    }
+  </script>
+
+  <!-- ═══════════ MODAL 1: BORÇ KAPAMA / ELLE ÖDENDİ ═══════════ -->
+  <div id="modalPaymentStatus" class="erp-modal-overlay">
+    <div class="erp-modal">
+      <div class="erp-modal-header">
+        <h3><i class="fa-solid fa-money-bill-transfer" style="color:var(--primary);"></i> Fatura Borç Kapama & Ödeme Durumu</h3>
+        <button class="erp-modal-close" onclick="closeModal('modalPaymentStatus')">&times;</button>
+      </div>
+      <div class="erp-modal-body">
+        <input type="hidden" id="payModalInvoiceKey">
+        <input type="hidden" id="payModalRawNetTotal">
+        <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:10px; padding:12px 16px; margin-bottom:16px;">
+          <div style="display:flex; justify-content:space-between; margin-bottom:6px;">
+            <span style="font-weight:700; color:var(--text-muted); font-size:0.75rem;">FATURA NO</span>
+            <span style="font-weight:800; color:var(--secondary);" id="payModalFicheNo">-</span>
+          </div>
+          <div style="display:flex; justify-content:space-between; margin-bottom:6px;">
+            <span style="font-weight:700; color:var(--text-muted); font-size:0.75rem;">CARİ ÜNVANI</span>
+            <span style="font-weight:700; color:var(--primary);" id="payModalCariName">-</span>
+          </div>
+          <div style="display:flex; justify-content:space-between; margin-bottom:6px;">
+            <span style="font-weight:700; color:var(--text-muted); font-size:0.75rem;">VADE TARİHİ</span>
+            <span style="font-weight:700;" id="payModalDueDate">-</span>
+          </div>
+          <div style="display:flex; justify-content:space-between;">
+            <span style="font-weight:700; color:var(--text-muted); font-size:0.75rem;">FATURA TUTARI</span>
+            <span style="font-weight:800; color:var(--secondary); font-size:1.05rem;" id="payModalNetTotal">-</span>
+          </div>
+        </div>
+
+        <div style="margin-bottom:14px;">
+          <label style="font-size:0.75rem; font-weight:700; color:var(--text-muted); display:block; margin-bottom:6px;">ÖDEME / KAPAMA DURUMU</label>
+          <div style="display:grid; grid-template-columns:repeat(3, 1fr); gap:10px;">
+            <label style="cursor:pointer; padding:10px; border-radius:8px; border:2px solid #86efac; background:#f0fdf4; display:flex; align-items:center; gap:8px; font-weight:700; color:#15803d; font-size:0.8rem;">
+              <input type="radio" name="payModalStatusRadio" value="Odendi" onchange="onPaymentRadioChange()"> Ödendi
+            </label>
+            <label style="cursor:pointer; padding:10px; border-radius:8px; border:2px solid #fde68a; background:#fffbeb; display:flex; align-items:center; gap:8px; font-weight:700; color:#b45309; font-size:0.8rem;">
+              <input type="radio" name="payModalStatusRadio" value="Kismi" onchange="onPaymentRadioChange()"> Kısmi Ödendi
+            </label>
+            <label style="cursor:pointer; padding:10px; border-radius:8px; border:2px solid #fca5a5; background:#fef2f2; display:flex; align-items:center; gap:8px; font-weight:700; color:#b91c1c; font-size:0.8rem;">
+              <input type="radio" name="payModalStatusRadio" value="Odenmedi" onchange="onPaymentRadioChange()"> Ödenmedi / Açık
+            </label>
+          </div>
+        </div>
+
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:14px;">
+          <div>
+            <label style="font-size:0.75rem; font-weight:700; color:var(--text-muted); display:block; margin-bottom:4px;">ÖDENEN TUTAR (₺)</label>
+            <input type="number" step="0.01" id="payModalPaidAmount" class="vade-input" style="width:100%;">
+          </div>
+          <div>
+            <label style="font-size:0.75rem; font-weight:700; color:var(--text-muted); display:block; margin-bottom:4px;">ÖDEME TARİHİ</label>
+            <input type="date" id="payModalDate" class="vade-input" style="width:100%;">
+          </div>
+        </div>
+
+        <div style="margin-bottom:10px;">
+          <label style="font-size:0.75rem; font-weight:700; color:var(--text-muted); display:block; margin-bottom:4px;">ÖDEME NOTU / AÇIKLAMA</label>
+          <textarea id="payModalNote" class="vade-input" style="width:100%; height:70px; resize:none;" placeholder="Örn: Garanti Bankası EFT ile ödendi"></textarea>
+        </div>
+      </div>
+      <div class="erp-modal-footer">
+        <button class="mini-btn" onclick="closeModal('modalPaymentStatus')">Vazgeç</button>
+        <button class="premium-btn" style="background:var(--success);" onclick="savePaymentStatus()"><i class="fa-solid fa-check"></i> Kaydet ve Kapat</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════ MODAL 2: CARİ HAREKETLERİ & VADE DETAY ═══════════ -->
+  <div id="modalCariTransactions" class="erp-modal-overlay">
+    <div class="erp-modal erp-modal-lg">
+      <div class="erp-modal-header">
+        <div>
+          <h3 id="cariModalTitle"><i class="fa-solid fa-user-check" style="color:var(--primary);"></i> Cari Fatura & Vade Hareketleri</h3>
+          <span style="font-size:0.75rem; color:var(--text-muted); font-weight:600;" id="cariModalSub">Cari Kodu</span>
+        </div>
+        <button class="erp-modal-close" onclick="closeModal('modalCariTransactions')">&times;</button>
+      </div>
+      <div class="erp-modal-body" style="padding-top:14px;">
+        <div class="modal-tabs">
+          <button class="modal-tab-btn active" id="tabCariAll" onclick="filterCariModalTab('all')">
+            <i class="fa-solid fa-list"></i> Tüm Faturalar (<span id="countCariAll">0</span>)
+          </button>
+          <button class="modal-tab-btn" id="tabCariUnpaid" onclick="filterCariModalTab('unpaid')" style="color:#b91c1c;">
+            <i class="fa-solid fa-circle-xmark"></i> Ödenmemiş / Açık (<span id="countCariUnpaid">0</span>)
+          </button>
+          <button class="modal-tab-btn" id="tabCariPaid" onclick="filterCariModalTab('paid')" style="color:#15803d;">
+            <i class="fa-solid fa-circle-check"></i> Ödenenler (<span id="countCariPaid">0</span>)
+          </button>
+        </div>
+
+        <div class="table-responsive" style="max-height:420px;">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Fatura No</th>
+                <th>Tarih</th>
+                <th>Vade</th>
+                <th>Kalan Gün</th>
+                <th style="text-align:right;">Fatura Tutarı</th>
+                <th style="text-align:right;">Ödenen</th>
+                <th style="text-align:right;">Kalan</th>
+                <th>Ödeme Durumu</th>
+                <th style="text-align:center;">İşlem</th>
+              </tr>
+            </thead>
+            <tbody id="cariModalTableBody">
+              <tr><td colspan="9" style="text-align:center; padding:20px;"><i class="fa-solid fa-circle-notch fa-spin"></i> Yükleniyor...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+      <div class="erp-modal-footer">
+        <button class="mini-btn" onclick="closeModal('modalCariTransactions')">Kapat</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════ MODAL 3: ÇOK KANALLI BİLDİRİM GÖNDERİMİ ═══════════ -->
+  <div id="modalSendNotification" class="erp-modal-overlay">
+    <div class="erp-modal">
+      <div class="erp-modal-header">
+        <h3><i class="fa-solid fa-paper-plane" style="color:var(--primary);"></i> Fatura Bildirimi Gönder</h3>
+        <button class="erp-modal-close" onclick="closeModal('modalSendNotification')">&times;</button>
+      </div>
+      <div class="erp-modal-body">
+        <div style="margin-bottom:14px;">
+          <label style="font-size:0.75rem; font-weight:700; color:var(--text-muted); display:block; margin-bottom:6px;">BİLDİRİM KANALI</label>
+          <div style="display:grid; grid-template-columns:repeat(4, 1fr); gap:8px;">
+            <button class="mini-btn channel-select-btn active" id="chBtnWhatsApp" onclick="selectNotifyChannel('whatsapp')">
+              <i class="fa-brands fa-whatsapp" style="color:#25d366; font-size:1.1rem;"></i><br>WhatsApp
+            </button>
+            <button class="mini-btn channel-select-btn" id="chBtnSms" onclick="selectNotifyChannel('sms')">
+              <i class="fa-solid fa-comment-sms" style="color:#3b82f6; font-size:1.1rem;"></i><br>SMS
+            </button>
+            <button class="mini-btn channel-select-btn" id="chBtnTelegram" onclick="selectNotifyChannel('telegram')">
+              <i class="fa-brands fa-telegram" style="color:#0088cc; font-size:1.1rem;"></i><br>Telegram
+            </button>
+            <button class="mini-btn channel-select-btn" id="chBtnMail" onclick="selectNotifyChannel('mail')">
+              <i class="fa-solid fa-envelope" style="color:#ea4335; font-size:1.1rem;"></i><br>E-Posta
+            </button>
+          </div>
+        </div>
+
+        <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:10px; padding:12px 16px; margin-bottom:14px;">
+          <div style="display:flex; justify-content:space-between; margin-bottom:4px;">
+            <span style="font-size:0.75rem; font-weight:700; color:var(--text-muted);">ALICI</span>
+            <span style="font-weight:700; color:var(--secondary);" id="notifModalCariName">-</span>
+          </div>
+          <div style="display:flex; justify-content:space-between; margin-bottom:4px;">
+            <span style="font-size:0.75rem; font-weight:700; color:var(--text-muted);">TELEFON</span>
+            <input type="text" id="notifModalPhone" class="vade-input" style="padding:2px 8px; font-size:0.78rem; width:150px; text-align:right;">
+          </div>
+          <div style="display:flex; justify-content:space-between;">
+            <span style="font-size:0.75rem; font-weight:700; color:var(--text-muted);">E-POSTA</span>
+            <input type="email" id="notifModalEmail" class="vade-input" style="padding:2px 8px; font-size:0.78rem; width:180px; text-align:right;">
+          </div>
+        </div>
+
+        <div style="margin-bottom:12px;">
+          <label style="font-size:0.75rem; font-weight:700; color:var(--text-muted); display:block; margin-bottom:4px;">ŞABLON SEÇİN</label>
+          <select id="notifModalTemplate" class="vade-select" style="width:100%;" onchange="applyNotifyTemplate()">
+            <option value="hatirlatma">📌 Vade Yaklaştı Hatırlatması</option>
+            <option value="gecikme">⚠️ Vadesi Geçmiş Borç İhtarı</option>
+            <option value="tesekkur">✅ Ödeme Teşekkür Mesajı</option>
+            <option value="ozet">📋 Hesap ve Fatura Özeti</option>
+          </select>
+        </div>
+
+        <div style="margin-bottom:10px;">
+          <label style="font-size:0.75rem; font-weight:700; color:var(--text-muted); display:block; margin-bottom:4px;">MESAJ METNİ</label>
+          <textarea id="notifModalMessage" class="vade-input" style="width:100%; height:110px; resize:none; font-family:inherit;"></textarea>
+        </div>
+
+        <div id="notifModalAlert" style="display:none; font-size:0.8rem; padding:8px 12px; border-radius:6px; margin-top:8px;"></div>
+      </div>
+      <div class="erp-modal-footer">
+        <button class="mini-btn" onclick="closeModal('modalSendNotification')">Vazgeç</button>
+        <button class="premium-btn" id="btnSubmitNotify" onclick="executeSendNotification()"><i class="fa-solid fa-paper-plane"></i> Gönder</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    function openModal(id) {
+      const m = document.getElementById(id);
+      if (m) m.classList.add('active');
+    }
+    function closeModal(id) {
+      const m = document.getElementById(id);
+      if (m) m.classList.remove('active');
     }
   </script>
 </body>

@@ -1,14 +1,17 @@
 using System;
+using System.Net.Http;
+using System.Text;
+using System.Text.Json;
 using System.Threading.Tasks;
 using LogoCrmTelegramIntegration.Application.Services;
+using LogoCrmTelegramIntegration.Infrastructure.Telegram;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
 
 namespace LogoCrmTelegramIntegration.WebUI.Controllers
 {
 	/// <summary>
-	/// E-posta ve SMS gönderim API'si.
-	/// Ön yüzden tetiklenen bildirim isteklerini karşılar.
+	/// E-posta, SMS, Telegram ve WhatsApp bildirim API'si.
 	/// </summary>
 	[ApiController]
 	[Route("api/[controller]")]
@@ -16,15 +19,18 @@ namespace LogoCrmTelegramIntegration.WebUI.Controllers
 	{
 		private readonly IEmailService _emailService;
 		private readonly ISmsService _smsService;
+		private readonly ITelegramBotManager _telegramBotManager;
 		private readonly IConfiguration _config;
 
 		public NotificationController(
 			IEmailService emailService,
 			ISmsService smsService,
+			ITelegramBotManager telegramBotManager,
 			IConfiguration configuration)
 		{
 			_emailService = emailService;
 			_smsService = smsService;
+			_telegramBotManager = telegramBotManager;
 			_config = configuration;
 		}
 
@@ -160,6 +166,143 @@ namespace LogoCrmTelegramIntegration.WebUI.Controllers
 				return Ok(new { success = false, message = $"Bakiye sorgulanamadı: {ex.Message}" });
 			}
 		}
+
+		// ─────────────────────────────────────────────────────────────────────
+		// TELEGRAM GÖNDERİMİ
+		// ─────────────────────────────────────────────────────────────────────
+
+		/// <summary>
+		/// Telegram üzerinden bildirim veya vade hatırlatma mesajı gönderir.
+		/// POST /api/notification/send-telegram
+		/// </summary>
+		[HttpPost("send-telegram")]
+		public async Task<IActionResult> SendTelegram([FromBody] SendTelegramRequest req)
+		{
+			if (req == null || string.IsNullOrWhiteSpace(req.Message))
+				return BadRequest(new { success = false, message = "Mesaj içeriği zorunludur." });
+
+			long targetChatId = req.ChatId ?? 0;
+			if (targetChatId == 0)
+			{
+				var cfgChat = _config["Telegram:DefaultChatId"] ?? _config["Telegram:AdminChatId"] ?? _config["Telegram:NotificationChatId"];
+				if (!string.IsNullOrWhiteSpace(cfgChat) && long.TryParse(cfgChat, out long parsedId))
+				{
+					targetChatId = parsedId;
+				}
+			}
+
+			if (targetChatId == 0)
+			{
+				return BadRequest(new { success = false, message = "Geçerli bir Telegram Chat ID belirtilmedi veya ayarlarda varsayılan Chat ID bulunamadı." });
+			}
+
+			try
+			{
+				await _telegramBotManager.SendTextMessageAsync(targetChatId, req.Message);
+				return Ok(new { success = true, message = "Telegram mesajı başarıyla iletildi." });
+			}
+			catch (Exception ex)
+			{
+				return Ok(new { success = false, message = $"Telegram gönderim hatası: {ex.Message}" });
+			}
+		}
+
+		// ─────────────────────────────────────────────────────────────────────
+		// WHATSAPP (TOKENSIZ WEB KÖPRÜSÜ + DİREKT WEB LİNKİ)
+		// ─────────────────────────────────────────────────────────────────────
+
+		/// <summary>
+		/// WhatsApp üzerinden bildirim gönderir.
+		/// Önce yerel tokensiz WhatsApp köprüsünü (port 5001) dener; aktifse doğrudan mesaj atar.
+		/// Köprü aktif değilse veya çevrimdışıysa WhatsApp Web bağlantı linkini döner.
+		/// POST /api/notification/send-whatsapp
+		/// </summary>
+		[HttpPost("send-whatsapp")]
+		public async Task<IActionResult> SendWhatsApp([FromBody] SendWhatsAppRequest req)
+		{
+			if (req == null || string.IsNullOrWhiteSpace(req.Phone))
+				return BadRequest(new { success = false, message = "Telefon numarası zorunludur." });
+
+			string cleanPhone = new string(req.Phone.Where(char.IsDigit).ToArray());
+			if (cleanPhone.StartsWith("0") && cleanPhone.Length == 11)
+			{
+				cleanPhone = "9" + cleanPhone; // Türkiye 90...
+			}
+			else if (cleanPhone.Length == 10)
+			{
+				cleanPhone = "90" + cleanPhone;
+			}
+
+			string webUrl = $"https://web.whatsapp.com/send?phone={cleanPhone}&text={Uri.EscapeDataString(req.Message ?? "")}";
+
+			// 1. Yerel WhatsApp Köprüsünü (port 5001) kontrol et
+			try
+			{
+				using var http = new HttpClient { Timeout = TimeSpan.FromSeconds(3) };
+				var payload = new { phone = cleanPhone, message = req.Message };
+				var jsonContent = new StringContent(JsonSerializer.Serialize(payload), Encoding.UTF8, "application/json");
+				
+				var resp = await http.PostAsync("http://127.0.0.1:5001/send", jsonContent);
+				if (resp.IsSuccessStatusCode)
+				{
+					var resString = await resp.Content.ReadAsStringAsync();
+					return Ok(new
+					{
+						success = true,
+						via = "bridge",
+						message = "WhatsApp mesajı yerel servis (Baileys Web Bridge) üzerinden anında gönderildi!",
+						webUrl = webUrl
+					});
+				}
+			}
+			catch
+			{
+				// Köprü çevrimdışı, web link fallback'e geç
+			}
+
+			return Ok(new
+			{
+				success = true,
+				via = "web_link",
+				message = "WhatsApp Web linki oluşturuldu. Köprü çevrimdışı olduğundan tarayıcıdan WhatsApp Web açılacaktır.",
+				webUrl = webUrl
+			});
+		}
+
+		/// <summary>
+		/// Yerel WhatsApp Bridge durumunu ve varsa QR kodunu getirir.
+		/// GET /api/notification/whatsapp-bridge-status
+		/// </summary>
+		[HttpGet("whatsapp-bridge-status")]
+		public async Task<IActionResult> GetWhatsAppBridgeStatus()
+		{
+			try
+			{
+				using var http = new HttpClient { Timeout = TimeSpan.FromSeconds(3) };
+				var resp = await http.GetAsync("http://127.0.0.1:5001/status");
+				if (resp.IsSuccessStatusCode)
+				{
+					var content = await resp.Content.ReadAsStringAsync();
+					return Content(content, "application/json");
+				}
+			}
+			catch (Exception ex)
+			{
+				return Ok(new
+				{
+					online = false,
+					status = "disconnected",
+					message = "WhatsApp Köprüsü bağlantı hatası: " + ex.Message
+				});
+			}
+
+			return Ok(new
+			{
+				online = false,
+				status = "disconnected",
+				message = "WhatsApp Köprüsü (port 5001) çalışmıyor."
+			});
+		}
 	}
 
 	// ─────────────────────────────────────────────────────────────────────────
@@ -212,4 +355,17 @@ namespace LogoCrmTelegramIntegration.WebUI.Controllers
 		/// <summary>SMS başlığı (boşsa appsettings kullanılır).</summary>
 		public string? MsgHeader { get; set; }
 	}
+
+	public class SendTelegramRequest
+	{
+		public long? ChatId { get; set; }
+		public string? Message { get; set; }
+	}
+
+	public class SendWhatsAppRequest
+	{
+		public string? Phone { get; set; }
+		public string? Message { get; set; }
+	}
 }
+

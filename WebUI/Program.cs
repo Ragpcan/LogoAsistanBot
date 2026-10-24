@@ -51,6 +51,7 @@ public class Program
 			webApplicationBuilder.Services.AddControllers();
 
 			webApplicationBuilder.Services.AddSingleton<IAppPermissionStore, AppPermissionStore>();
+			webApplicationBuilder.Services.AddSingleton<IInvoicePaymentStore, InvoicePaymentStore>();
 			webApplicationBuilder.Services.AddSingleton<IWebUserStore, WebUserStore>();
 			webApplicationBuilder.Services.AddSingleton<ITelegramUserStore, TelegramUserStore>();
 			webApplicationBuilder.Services.AddSingleton<IProposalLogStore, ProposalLogStore>();
