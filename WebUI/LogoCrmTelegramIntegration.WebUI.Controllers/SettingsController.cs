@@ -641,11 +641,157 @@ public class TestSmsSettingsRequest
             return BadRequest(new { isSuccess = false, message = $"XSLT kaydedilemedi: {ex.Message}" });
         }
     }
+
+    [HttpGet("mailsms")]
+    public IActionResult GetMailSmsSettings()
+    {
+        var mailSection = _configuration.GetSection("MailSettings");
+        var smsSection = _configuration.GetSection("SmsSettings");
+        var waSection = _configuration.GetSection("WhatsAppSettings");
+        var autoSendSection = _configuration.GetSection("AutoSendConfig");
+
+        return Ok(new
+        {
+            mailSettings = new
+            {
+                host = mailSection["SmtpHost"] ?? "",
+                port = int.TryParse(mailSection["SmtpPort"], out int p) ? p : 587,
+                user = mailSection["SmtpUser"] ?? "",
+                pass = mailSection["SmtpPassword"] ?? "",
+                enableSsl = !bool.TryParse(mailSection["EnableSsl"], out bool ssl) || ssl,
+                autoSend = bool.TryParse(mailSection["AutoSend"], out bool ma) && ma
+            },
+            smsSettings = new
+            {
+                user = smsSection["UserCode"] ?? "",
+                pass = smsSection["Password"] ?? "",
+                header = smsSection["MsgHeader"] ?? "LOGO",
+                autoSend = bool.TryParse(smsSection["AutoSend"], out bool sa) && sa
+            },
+            whatsAppSettings = new
+            {
+                autoSend = bool.TryParse(waSection["AutoSend"], out bool wa) && wa,
+                bridgeUrl = waSection["BridgeUrl"] ?? "http://127.0.0.1:5001"
+            },
+            autoSendConfig = new
+            {
+                startDate = autoSendSection["StartDate"] ?? DateTime.Now.ToString("yyyy-MM-ddTHH:mm"),
+                intervalMinutes = int.TryParse(autoSendSection["IntervalMinutes"], out int im) ? im : 15,
+                sendFaturalar = !bool.TryParse(autoSendSection["SendFaturalar"], out bool sf) || sf,
+                sendIrsaliyeler = !bool.TryParse(autoSendSection["SendIrsaliyeler"], out bool si) || si,
+                sendSiparisler = bool.TryParse(autoSendSection["SendSiparisler"], out bool ss) && ss
+            }
+        });
+    }
+
+    [HttpPost("mailsms")]
+    public async Task<IActionResult> SaveMailSmsSettings([FromBody] SaveMailSmsSettingsRequest request)
+    {
+        try
+        {
+            var appsettingsPath = Path.Combine(_env.ContentRootPath, "appsettings.json");
+            if (!System.IO.File.Exists(appsettingsPath))
+            {
+                var parentAppsettings = Path.Combine(_env.ContentRootPath, "..", "Worker", "appsettings.json");
+                if (System.IO.File.Exists(parentAppsettings))
+                {
+                    appsettingsPath = parentAppsettings;
+                }
+            }
+
+            string jsonContent = System.IO.File.Exists(appsettingsPath)
+                ? await System.IO.File.ReadAllTextAsync(appsettingsPath)
+                : "{}";
+
+            var jsonNode = JsonNode.Parse(jsonContent) ?? new JsonObject();
+
+            // MailSettings
+            if (jsonNode["MailSettings"] is not JsonObject mailObj)
+            {
+                mailObj = new JsonObject();
+                jsonNode["MailSettings"] = mailObj;
+            }
+            if (request.MailHost != null) mailObj["SmtpHost"] = request.MailHost;
+            mailObj["SmtpPort"] = (request.MailPort > 0 ? request.MailPort : 587).ToString();
+            if (request.MailUser != null) { mailObj["SmtpUser"] = request.MailUser; mailObj["FromAddress"] = request.MailUser; }
+            if (request.MailPass != null) mailObj["SmtpPassword"] = request.MailPass;
+            mailObj["EnableSsl"] = request.MailEnableSsl;
+            mailObj["AutoSend"] = request.MailAutoSend;
+
+            // SmsSettings
+            if (jsonNode["SmsSettings"] is not JsonObject smsObj)
+            {
+                smsObj = new JsonObject();
+                jsonNode["SmsSettings"] = smsObj;
+            }
+            if (request.SmsUser != null) smsObj["UserCode"] = request.SmsUser;
+            if (request.SmsPass != null) smsObj["Password"] = request.SmsPass;
+            if (request.SmsHeader != null) smsObj["MsgHeader"] = request.SmsHeader;
+            smsObj["AutoSend"] = request.SmsAutoSend;
+
+            // WhatsAppSettings
+            if (jsonNode["WhatsAppSettings"] is not JsonObject waObj)
+            {
+                waObj = new JsonObject();
+                jsonNode["WhatsAppSettings"] = waObj;
+            }
+            waObj["AutoSend"] = request.WhatsAppAutoSend;
+            waObj["BridgeUrl"] = "http://127.0.0.1:5001";
+
+            // AutoSendConfig
+            if (jsonNode["AutoSendConfig"] is not JsonObject autoObj)
+            {
+                autoObj = new JsonObject();
+                jsonNode["AutoSendConfig"] = autoObj;
+            }
+            if (request.AutoSendStartDate != null) autoObj["StartDate"] = request.AutoSendStartDate;
+            autoObj["IntervalMinutes"] = request.AutoSendIntervalMinutes > 0 ? request.AutoSendIntervalMinutes : 15;
+            autoObj["SendFaturalar"] = request.AutoSendFaturalar;
+            autoObj["SendIrsaliyeler"] = request.AutoSendIrsaliyeler;
+            autoObj["SendSiparisler"] = request.AutoSendSiparisler;
+
+            var options = new JsonSerializerOptions { WriteIndented = true };
+            await System.IO.File.WriteAllTextAsync(appsettingsPath, jsonNode.ToJsonString(options));
+
+            // BaseDirectory ile de senkronize et
+            var baseAppsettings = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "appsettings.json");
+            if (baseAppsettings != appsettingsPath && System.IO.File.Exists(baseAppsettings))
+            {
+                await System.IO.File.WriteAllTextAsync(baseAppsettings, jsonNode.ToJsonString(options));
+            }
+
+            return Ok(new { isSuccess = true, message = "Mail, SMS ve WhatsApp gönderim ayarları başarıyla kaydedildi!" });
+        }
+        catch (Exception ex)
+        {
+            return Ok(new { isSuccess = false, message = $"Ayarlar kaydedilemedi: {ex.Message}" });
+        }
+    }
 }
 
 public class SaveXsltRequest
 {
     public string Type { get; set; } = "irsaliye";
     public string Content { get; set; } = string.Empty;
+}
+
+public class SaveMailSmsSettingsRequest
+{
+    public string? MailHost { get; set; }
+    public int MailPort { get; set; } = 587;
+    public string? MailUser { get; set; }
+    public string? MailPass { get; set; }
+    public bool MailEnableSsl { get; set; } = true;
+    public bool MailAutoSend { get; set; }
+    public string? SmsUser { get; set; }
+    public string? SmsPass { get; set; }
+    public string? SmsHeader { get; set; }
+    public bool SmsAutoSend { get; set; }
+    public bool WhatsAppAutoSend { get; set; }
+    public string? AutoSendStartDate { get; set; }
+    public int AutoSendIntervalMinutes { get; set; } = 15;
+    public bool AutoSendFaturalar { get; set; } = true;
+    public bool AutoSendIrsaliyeler { get; set; } = true;
+    public bool AutoSendSiparisler { get; set; }
 }
 

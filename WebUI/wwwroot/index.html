@@ -132,7 +132,7 @@
         <i class="fa-user-tie"></i> Telegram Kullanıcı Yetkileri
       </button>
       <button class="tab-btn" id="navTabMailSms" onclick="switchTab('tab-mailsms', this)" style="border-bottom:3px solid #10b981; color:#059669; font-weight:700;">
-        <i class="fa-envelope"></i> 📧 Mail, SMS & Otomatik Gönderim
+        <i class="fa-brands fa-whatsapp" style="color:#25d366;"></i> 💬 Mail, SMS & WhatsApp
       </button>
       <button class="tab-btn" id="navTabReports" onclick="switchTab('tab-reports', this)" style="color:#7c3aed; font-weight:700;">
         <i class="fa-solid fa-chart-column"></i> 📊 Akıllı Raporlar & SQL
@@ -143,6 +143,9 @@
       <button class="tab-btn" id="navTabAdminSettings" onclick="switchTab('tab-settings', this)">
         <i class="fa-sliders"></i> ⚙️ Admin Ayarları & Sistem Testi
       </button>
+      <a class="tab-btn" href="/erp-portal.html" target="_blank" style="margin-left:auto; background:#2563eb; color:#ffffff; font-weight:700; text-decoration:none; display:inline-flex; align-items:center; gap:6px; border-radius:6px; padding:0.45rem 1rem;">
+        <i class="fa-solid fa-table-list"></i> 💼 ERP Portalı & Vade Takip ↗
+      </a>
     </div>
 
     <!-- TAB 1: DASHBOARD -->
@@ -252,14 +255,14 @@
       
       <div class="card" style="background: linear-gradient(135deg, #065f46, #059669); color:#ffffff; border:none; margin-bottom:1.5rem;">
         <h2 style="font-size:1.2rem; font-weight:800; margin:0 0 0.4rem 0; color:#ffffff;">
-          📧 E-Posta, SMS & Otomatik Gönderim Yönetimi
+          💬 WhatsApp Web, E-Posta & SMS Otomatik Gönderim Yönetimi
         </h2>
         <p style="font-size:0.85rem; color:#a7f3d0; margin:0;">
-          ERP sisteminizde yeni bir Fatura, İrsaliye veya Sipariş oluşturulduğunda carilerinize otomatik PDF E-Posta ve NetGSM SMS gönderilmesini bu ekrandan ayarlayabilirsiniz.
+          ERP sisteminizde yeni bir Fatura, İrsaliye veya Sipariş oluştuğunda carilerinize otomatik PDF E-Posta, NetGSM SMS ve <strong>tokensiz WhatsApp Web</strong> üzerinden anında bildirim gönderilmesini bu ekrandan yönetebilirsiniz.
         </p>
       </div>
 
-      <div class="grid">
+      <div class="grid" style="grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));">
 
         <!-- CARD 1: E-POSTA (SMTP) AYARLARI -->
         <div class="card" style="border-top: 4px solid #10b981;">
@@ -340,6 +343,53 @@
           </div>
         </div>
 
+        <!-- CARD 3: WHATSAPP WEB (TOKENSIZ) ENTEGRASYON AYARLARI -->
+        <div class="card" style="border-top: 4px solid #25d366; display:flex; flex-direction:column; justify-content:space-between;">
+          <div>
+            <div class="card-title" style="color: #15803d; display:flex; justify-content:space-between; align-items:center;">
+              <span><i class="fa-brands fa-whatsapp" style="color:#25d366; font-size:1.25rem;"></i> 💬 WhatsApp Web (Tokensiz)</span>
+              <span id="indexWaStatusBadge" class="badge" style="background:#fee2e2; color:#b91c1c; font-size:0.75rem; padding:4px 8px; border-radius:12px; font-weight:700;">Kontrol Ediliyor...</span>
+            </div>
+            
+            <p style="font-size:0.82rem; color:#64748b; margin-bottom:0.75rem;">
+              Resmi API tokeni veya aylık abonelik gerektirmez. Aşağıdaki QR kodu telefonunuzdaki WhatsApp uygulamasından okutarak sistemi bağlayabilirsiniz.
+            </p>
+
+            <!-- QR Kod / Durum Kutusu -->
+            <div id="indexWaQrContainer" style="background:#f8fafc; border:1px dashed #cbd5e1; border-radius:8px; padding:12px; text-align:center; min-height:165px; display:flex; flex-direction:column; align-items:center; justify-content:center;">
+              <i class="fa-solid fa-spinner fa-spin" style="font-size:2rem; color:#25d366; margin-bottom:8px;"></i>
+              <div style="font-size:0.85rem; color:#64748b;">WhatsApp Köprüsü Durumu Alınıyor...</div>
+            </div>
+
+            <!-- Otomatik Gönderim Checkbox -->
+            <div class="form-group" style="background:#f0fdf4; padding:0.75rem; border-radius:8px; border:1px solid #bbf7d0; margin-top:0.75rem;">
+              <label style="display:flex; align-items:center; gap:0.5rem; cursor:pointer; color:#15803d; margin:0; font-weight:600; font-size:0.88rem;">
+                <input type="checkbox" id="cfgWaAutoSend" style="width:18px; height:18px;"> ⚡ Fatura & Vade Bildirimlerinde WhatsApp Kullan
+              </label>
+            </div>
+
+            <!-- Test Gönderim -->
+            <div class="form-group" style="margin-top:0.75rem;">
+              <label for="cfgWaTestPhone" style="font-size:0.8rem; font-weight:700; color:#475569;">Hızlı Test Gönderimi (GSM):</label>
+              <div style="display:flex; gap:6px;">
+                <input type="text" id="cfgWaTestPhone" class="form-control" placeholder="Örn: 0532XXXXXXX" style="font-size:0.85rem;">
+                <button type="button" class="btn btn-secondary" onclick="testIndexWhatsApp()" style="white-space:nowrap; padding:0.4rem 0.8rem; font-size:0.85rem; background:#25d366; border-color:#25d366; color:#fff;">
+                  <i class="fa-paper-plane"></i> Gönder
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-top:0.75rem; padding-top:0.5rem; border-top:1px solid #e2e8f0;">
+            <button type="button" class="btn btn-sm btn-outline-secondary" onclick="refreshIndexWhatsApp()" style="font-size:0.78rem;">
+              <i class="fa-solid fa-arrows-rotate"></i> QR Yenile
+            </button>
+            <button type="button" class="btn btn-sm btn-outline-danger" onclick="logoutIndexWhatsApp()" style="font-size:0.78rem; color:#ef4444; border-color:#fca5a5;">
+              <i class="fa-solid fa-power-off"></i> Bağlantıyı Kes
+            </button>
+          </div>
+        </div>
+
       </div>
 
       <!-- CARD 3: OTOMATİK GÖNDERİM ZAMANLAMA & BAŞLANGIÇ AYARLARI -->
@@ -394,7 +444,7 @@
       <!-- SAVE BUTTON -->
       <div class="card" style="text-align:right; background:#f0fdf4; border:1px solid #bbf7d0;">
         <button class="btn btn-success" onclick="saveMailSmsSettings()" style="padding:0.8rem 2.5rem; font-size:1.05rem;">
-          <i class="fa-save"></i> Tüm Mail, SMS & Otomatik Gönderim Ayarlarını Kaydet
+          <i class="fa-save"></i> Tüm WhatsApp, Mail & SMS Ayarlarını Kaydet
         </button>
         <div id="mailSmsAlert" class="alert" style="display:none; text-align:left;"></div>
       </div>

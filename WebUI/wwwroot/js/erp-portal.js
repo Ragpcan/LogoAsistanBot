@@ -16,6 +16,26 @@ const fmtGBP = (val) => new Intl.NumberFormat('en-GB', { style: 'currency', curr
 const fmtNum = (val) => new Intl.NumberFormat('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(val || 0);
 
 // ==========================================================
+// ACCORDION LOGIC FOR SIDEBAR
+// ==========================================================
+function toggleAccordion(element) {
+    if (!element) return;
+    const submenu = element.nextElementSibling;
+    if (!submenu || !submenu.classList.contains('submenu-container')) return;
+    const isOpen = submenu.style.display === 'flex';
+    
+    // Close all other open submenus
+    document.querySelectorAll('.submenu-container').forEach(s => s.style.display = 'none');
+    document.querySelectorAll('.parent-nav').forEach(p => p.classList.remove('open'));
+    
+    if (!isOpen) {
+        submenu.style.display = 'flex';
+        element.classList.add('open');
+    }
+}
+window.toggleAccordion = toggleAccordion;
+
+// ==========================================================
 // VIEW SWITCHER
 // ==========================================================
 function switchErpView(viewId, element) {
@@ -69,6 +89,7 @@ function switchErpView(viewId, element) {
         if (iconEl) iconEl.className = 'fa-solid fa-envelope';
     }
 }
+window.switchErpView = switchErpView;
 
 // ==========================================================
 // SQL QUERY HELPER

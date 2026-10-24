@@ -303,6 +303,26 @@ namespace LogoCrmTelegramIntegration.WebUI.Controllers
 				message = "WhatsApp Köprüsü (port 5001) çalışmıyor."
 			});
 		}
+
+		/// <summary>
+		/// Yerel WhatsApp Bridge oturumunu sonlandırır ve yeni QR üretilmesini tetikler.
+		/// POST /api/notification/whatsapp-logout
+		/// </summary>
+		[HttpPost("whatsapp-logout")]
+		public async Task<IActionResult> WhatsAppLogout()
+		{
+			try
+			{
+				using var http = new HttpClient { Timeout = TimeSpan.FromSeconds(5) };
+				var resp = await http.PostAsync("http://127.0.0.1:5001/logout", null);
+				var content = await resp.Content.ReadAsStringAsync();
+				return Content(content, "application/json");
+			}
+			catch (Exception ex)
+			{
+				return Ok(new { success = false, message = "WhatsApp Köprüsü oturum kapatma hatası: " + ex.Message });
+			}
+		}
 	}
 
 	// ─────────────────────────────────────────────────────────────────────────

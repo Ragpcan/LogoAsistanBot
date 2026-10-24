@@ -31,7 +31,12 @@ function switchTab(tabId, btnElement) {
     loadWebUsers();
   } else if (tabId === 'tab-mailsms') {
     loadMailSmsSettings();
-  } else if (tabId === 'tab-reports') {
+    loadIndexWhatsAppStatus();
+    startIndexWaPoller();
+  } else {
+    stopIndexWaPoller();
+  }
+  if (tabId === 'tab-reports') {
     loadReports();
     loadMainReportHistory();
   } else if (tabId === 'tab-settings') {
@@ -201,6 +206,9 @@ async function loadMailSmsSettings() {
       setVal('cfgSmsHeader', data.smsSettings.header);
       setCheck('cfgSmsAutoSend', data.smsSettings.autoSend === true);
     }
+    if (data.whatsAppSettings) {
+      setCheck('cfgWaAutoSend', data.whatsAppSettings.autoSend === true);
+    }
     if (data.autoSendConfig) {
       setVal('cfgAutoSendStartDate', data.autoSendConfig.startDate);
       setVal('cfgAutoSendIntervalMinutes', data.autoSendConfig.intervalMinutes || 15);
@@ -229,6 +237,7 @@ async function saveMailSmsSettings() {
     SmsPass: getVal('cfgSmsPass'),
     SmsHeader: getVal('cfgSmsHeader'),
     SmsAutoSend: getEl('cfgSmsAutoSend') ? getEl('cfgSmsAutoSend').checked : false,
+    WhatsAppAutoSend: getEl('cfgWaAutoSend') ? getEl('cfgWaAutoSend').checked : false,
     AutoSendStartDate: getVal('cfgAutoSendStartDate'),
     AutoSendIntervalMinutes: parseInt(getVal('cfgAutoSendIntervalMinutes', '15')) || 15,
     AutoSendFaturalar: getEl('cfgAutoSendFaturalar') ? getEl('cfgAutoSendFaturalar').checked : true,
@@ -261,6 +270,145 @@ async function saveMailSmsSettings() {
   }
 }
 window.saveMailSmsSettings = saveMailSmsSettings;
+
+// WHATSAPP WEB ENTEGRASYONU (INDEX SAYFASI)
+let indexWaPollTimer = null;
+
+function startIndexWaPoller() {
+  stopIndexWaPoller();
+  indexWaPollTimer = setInterval(loadIndexWhatsAppStatus, 5000);
+}
+
+function stopIndexWaPoller() {
+  if (indexWaPollTimer) {
+    clearInterval(indexWaPollTimer);
+    indexWaPollTimer = null;
+  }
+}
+
+async function loadIndexWhatsAppStatus() {
+  const badge = getEl('indexWaStatusBadge');
+  const container = getEl('indexWaQrContainer');
+  if (!badge || !container) return;
+
+  try {
+    const res = await fetch('/api/notification/whatsapp-bridge-status');
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    const data = await res.json();
+
+    if (data.isConnected) {
+      badge.style.background = '#dcfce7';
+      badge.style.color = '#15803d';
+      badge.innerText = '🟢 BAĞLI (+' + (data.userPhone || 'Aktif') + ')';
+
+      container.innerHTML = `
+        <div style="color:#15803d; padding:12px 0;">
+          <i class="fa-solid fa-circle-check" style="font-size:3rem; color:#22c55e; margin-bottom:8px;"></i>
+          <div style="font-weight:800; font-size:1.05rem; color:#15803d;">WhatsApp Web Bağlantısı Aktif!</div>
+          <div style="font-size:0.85rem; color:#475569; margin-top:4px;">Bağlı Telefon: <strong>+${data.userPhone || 'Aktif'}</strong></div>
+          <div style="font-size:0.75rem; color:#16a34a; margin-top:8px;">✅ Carilerinize fatura ve vade bildirimleri WhatsApp üzerinden gönderilebilir.</div>
+        </div>
+      `;
+    } else if (data.status === 'qr_waiting' && data.qr) {
+      badge.style.background = '#fef3c7';
+      badge.style.color = '#b45309';
+      badge.innerText = '🟡 QR Taraması Bekleniyor';
+
+      container.innerHTML = `
+        <div>
+          <img src="${data.qr}" alt="WhatsApp QR Kod" style="width:160px; height:160px; border-radius:8px; border:2px solid #22c55e; box-shadow:0 4px 10px rgba(0,0,0,0.08);">
+          <div style="font-size:0.78rem; color:#475569; margin-top:6px; font-weight:600;">
+            <i class="fa-brands fa-whatsapp" style="color:#25d366;"></i> WhatsApp > Bağlı Cihazlar > Cihaz Bağla
+          </div>
+        </div>
+      `;
+    } else {
+      badge.style.background = '#fee2e2';
+      badge.style.color = '#b91c1c';
+      badge.innerText = '🔴 Çevrimdışı';
+
+      container.innerHTML = `
+        <div style="color:#ef4444; padding:12px 0;">
+          <i class="fa-solid fa-circle-exclamation" style="font-size:2.5rem; margin-bottom:6px;"></i>
+          <div style="font-weight:700; font-size:0.9rem;">WhatsApp Köprüsü Hazırlanıyor...</div>
+          <div style="font-size:0.75rem; color:#64748b; margin-top:4px;">Lütfen birkaç saniye bekleyin veya QR Yenile'ye tıklayın.</div>
+          <button type="button" class="btn btn-sm btn-outline-secondary" onclick="refreshIndexWhatsApp()" style="margin-top:8px; font-size:0.75rem;">Yeniden Dene</button>
+        </div>
+      `;
+    }
+  } catch (err) {
+    if (badge) {
+      badge.style.background = '#fee2e2';
+      badge.style.color = '#b91c1c';
+      badge.innerText = '🔴 Çevrimdışı';
+    }
+    if (container) {
+      container.innerHTML = `
+        <div style="color:#ef4444; padding:12px 0;">
+          <i class="fa-solid fa-triangle-exclamation" style="font-size:2.2rem; margin-bottom:6px;"></i>
+          <div style="font-weight:700; font-size:0.85rem;">WhatsApp Köprüsüne Erişilemiyor</div>
+          <div style="font-size:0.75rem; color:#64748b; margin-top:4px;">Port 5001 servisi kontrol ediliyor...</div>
+        </div>
+      `;
+    }
+  }
+}
+window.loadIndexWhatsAppStatus = loadIndexWhatsAppStatus;
+
+async function refreshIndexWhatsApp() {
+  const container = getEl('indexWaQrContainer');
+  if (container) {
+    container.innerHTML = `<i class="fa-solid fa-spinner fa-spin" style="font-size:2rem; color:#25d366; margin-bottom:8px;"></i><div style="font-size:0.85rem; color:#64748b;">Yenileniyor...</div>`;
+  }
+  await loadIndexWhatsAppStatus();
+}
+window.refreshIndexWhatsApp = refreshIndexWhatsApp;
+
+async function logoutIndexWhatsApp() {
+  if (!confirm('WhatsApp Web oturumunu kapatmak ve yeni QR kod üretmek istediğinize emin misiniz?')) return;
+  try {
+    const res = await fetch('/api/notification/whatsapp-logout', { method: 'POST' });
+    const data = await res.json();
+    alert(data.message || 'Oturum kapatıldı, yeni QR kod üretiliyor...');
+    setTimeout(loadIndexWhatsAppStatus, 1500);
+  } catch (err) {
+    alert('Hata: ' + err.message);
+  }
+}
+window.logoutIndexWhatsApp = logoutIndexWhatsApp;
+
+async function testIndexWhatsApp() {
+  let phone = getVal('cfgWaTestPhone');
+  if (!phone) {
+    phone = prompt('Test WhatsApp mesajı gönderilecek GSM numarasını giriniz (Örn: 0532XXXXXXX):');
+  }
+  if (!phone) return;
+
+  try {
+    const res = await fetch('/api/notification/send-whatsapp', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        Phone: phone,
+        Message: `🔔 Logo Asistan Bot - WhatsApp Entegrasyon Testi Başarılı!\nBu mesaj tokensiz WhatsApp Web köprüsü üzerinden iletilmiştir.\nTarih: ${new Date().toLocaleString('tr-TR')}`
+      })
+    });
+    const data = await res.json();
+    if (data.success) {
+      if (data.via === 'bridge') {
+        alert('✅ BAŞARILI: ' + data.message);
+      } else {
+        alert('ℹ️ ' + data.message + '\n\nWhatsApp Web yeni sekmede açılıyor...');
+        if (data.webUrl) window.open(data.webUrl, '_blank');
+      }
+    } else {
+      alert('❌ Hata: ' + (data.message || 'Mesaj iletilemedi.'));
+    }
+  } catch (err) {
+    alert('❌ Test WhatsApp Hatası: ' + err.message);
+  }
+}
+window.testIndexWhatsApp = testIndexWhatsApp;
 
 async function testMailConnection() {
   const recipient = prompt('Test mailinin gönderileceği e-posta adresini giriniz:', getVal('cfgMailUser'));
