@@ -1,0 +1,999 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Logo ERP Yönetim & Hazine Portalı</title>
+  
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+
+  <style>
+    :root {
+      --primary: #2563eb;
+      --primary-dark: #1d4ed8;
+      --secondary: #0f172a;
+      --success: #10b981;
+      --danger: #ef4444;
+      --warning: #f59e0b;
+      --info: #3b82f6;
+      --purple: #8b5cf6;
+      
+      --bg-main: #f1f5f9;
+      --sidebar-bg: #0f172a;
+      --sidebar-hover: #1e293b;
+      --sidebar-active: #2563eb;
+      --card-bg: #ffffff;
+      --border-color: #e2e8f0;
+      
+      --text-main: #1e293b;
+      --text-muted: #64748b;
+      --text-on-dark: #f8fafc;
+      
+      --shadow-sm: 0 1px 3px rgba(0,0,0,0.08);
+      --shadow-md: 0 4px 12px -2px rgba(0,0,0,0.08);
+      --shadow-lg: 0 10px 25px -5px rgba(0,0,0,0.1);
+      --radius: 12px;
+      --sidebar-width: 260px;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      font-size: 13.5px;
+      background-color: var(--bg-main);
+      color: var(--text-main);
+      line-height: 1.5;
+      min-height: 100vh;
+      display: flex;
+    }
+
+    /* ═══════════ SIDEBAR ═══════════ */
+    .sidebar {
+      width: var(--sidebar-width);
+      background: var(--sidebar-bg);
+      color: var(--text-on-dark);
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+      position: fixed;
+      left: 0;
+      top: 0;
+      z-index: 1000;
+      border-right: 1px solid rgba(255,255,255,0.08);
+      user-select: none;
+    }
+
+    .sidebar-logo {
+      padding: 20px 18px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-weight: 800;
+      font-size: 1.1rem;
+      border-bottom: 1px solid rgba(255,255,255,0.08);
+      background: rgba(0,0,0,0.2);
+    }
+    .sidebar-logo-icon {
+      width: 36px;
+      height: 36px;
+      background: linear-gradient(135deg, var(--primary), #3b82f6);
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #fff;
+      font-size: 1.1rem;
+      box-shadow: 0 4px 10px rgba(37,99,235,0.3);
+    }
+    .sidebar-logo-text {
+      display: flex;
+      flex-direction: column;
+      line-height: 1.2;
+    }
+    .sidebar-logo-text span { font-weight: 800; letter-spacing: 0.5px; color: #fff; }
+    .sidebar-logo-text small { font-size: 0.65rem; color: #94a3b8; font-weight: 600; letter-spacing: 1px; }
+
+    .sidebar-nav {
+      padding: 12px 10px;
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
+      flex: 1;
+      overflow-y: auto;
+    }
+
+    .nav-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 9px 12px;
+      color: #94a3b8;
+      text-decoration: none;
+      border-radius: 8px;
+      font-weight: 500;
+      font-size: 0.85rem;
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+    .nav-item i.nav-icon { width: 20px; text-align: center; font-size: 0.95rem; }
+    .nav-item:hover { background: rgba(255,255,255,0.06); color: #fff; }
+    .nav-item.active { background: var(--primary); color: #fff; font-weight: 600; box-shadow: 0 4px 12px rgba(37,99,235,0.3); }
+
+    /* Accordion Menu */
+    .parent-nav {
+      justify-content: space-between;
+    }
+    .parent-nav .chevron-icon {
+      font-size: 0.65rem;
+      transition: transform 0.2s ease;
+      color: #64748b;
+    }
+    .parent-nav.open .chevron-icon {
+      transform: rotate(90deg);
+      color: #38bdf8;
+    }
+    .parent-nav.open {
+      color: #fff;
+      background: rgba(255,255,255,0.04);
+    }
+
+    .submenu-container {
+      display: none;
+      flex-direction: column;
+      gap: 2px;
+      padding-left: 28px;
+      margin: 2px 0 6px 0;
+      border-left: 2px solid rgba(255,255,255,0.08);
+      margin-left: 18px;
+    }
+    .submenu-container .nav-item {
+      padding: 7px 10px;
+      font-size: 0.8rem;
+      color: #94a3b8;
+    }
+    .submenu-container .nav-item:hover {
+      color: #38bdf8;
+      background: rgba(56,189,248,0.08);
+    }
+    .submenu-container .nav-item.active {
+      color: #fff;
+      background: var(--primary);
+    }
+
+    .nav-spacer { flex: 1; min-height: 20px; }
+    .sidebar-footer {
+      padding: 12px 10px;
+      border-top: 1px solid rgba(255,255,255,0.08);
+      background: rgba(0,0,0,0.15);
+    }
+
+    /* ═══════════ MAIN CONTENT ═══════════ */
+    .main-content {
+      flex: 1;
+      margin-left: var(--sidebar-width);
+      padding: 20px 28px;
+      background: var(--bg-main);
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    /* ═══════════ TOP HEADER ═══════════ */
+    .top-header {
+      background: #fff;
+      padding: 14px 22px;
+      border-radius: var(--radius);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      box-shadow: var(--shadow-sm);
+      border: 1px solid var(--border-color);
+      margin-bottom: 20px;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+    .header-left {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .header-left h1 {
+      font-size: 1.25rem;
+      font-weight: 800;
+      color: var(--secondary);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .header-left h1 i { color: var(--primary); }
+
+    .header-actions {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+    .ref-date-block {
+      background: #f8fafc;
+      padding: 6px 10px;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      border: 1px solid var(--border-color);
+      font-size: 0.8rem;
+    }
+    .date-input {
+      padding: 4px 6px;
+      border: 1px solid var(--border-color);
+      border-radius: 6px;
+      font-size: 0.78rem;
+      font-family: inherit;
+      background: #fff;
+    }
+    .mini-btn {
+      padding: 4px 8px;
+      border-radius: 6px;
+      border: 1px solid var(--border-color);
+      background: #fff;
+      color: var(--text-main);
+      cursor: pointer;
+      font-size: 0.75rem;
+      font-weight: 600;
+      transition: all 0.15s;
+    }
+    .mini-btn:hover { background: #f1f5f9; color: var(--primary); }
+
+    .premium-btn {
+      padding: 7px 14px;
+      border-radius: 8px;
+      border: none;
+      background: var(--primary);
+      color: #fff;
+      font-weight: 600;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 0.8rem;
+      transition: all 0.15s;
+      box-shadow: var(--shadow-sm);
+    }
+    .premium-btn:hover { background: var(--primary-dark); transform: translateY(-1px); }
+
+    .header-user {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-weight: 600;
+      color: var(--secondary);
+      background: #f8fafc;
+      padding: 5px 10px;
+      border-radius: 8px;
+      border: 1px solid var(--border-color);
+    }
+    .user-avatar {
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      background: var(--primary);
+      color: #fff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.75rem;
+      font-weight: 800;
+    }
+
+    /* ═══════════ KPI KARTLARI (TL, USD, EUR, GBP) ═══════════ */
+    .kpi-container {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 16px;
+      margin-bottom: 20px;
+    }
+    @media (max-width: 1300px) { .kpi-container { grid-template-columns: repeat(2, 1fr); } }
+    @media (max-width: 768px) { .kpi-container { grid-template-columns: 1fr; } }
+
+    .kpi-card {
+      background: #fff;
+      padding: 16px 18px;
+      border-radius: var(--radius);
+      box-shadow: var(--shadow-sm);
+      border: 1px solid var(--border-color);
+      position: relative;
+      overflow: hidden;
+    }
+    .kpi-currency-bg {
+      position: absolute;
+      right: 10px;
+      bottom: -10px;
+      font-size: 4.5rem;
+      font-weight: 900;
+      opacity: 0.05;
+      pointer-events: none;
+      color: var(--secondary);
+    }
+    .kpi-card h3 {
+      font-size: 0.8rem;
+      font-weight: 800;
+      color: var(--text-muted);
+      letter-spacing: 0.5px;
+      margin-bottom: 10px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .kpi-card table { width: 100%; border-collapse: collapse; }
+    .kpi-card th {
+      font-size: 0.7rem;
+      color: var(--text-muted);
+      padding-bottom: 4px;
+      border-bottom: 1px solid #f1f5f9;
+      font-weight: 600;
+    }
+    .kpi-card th.green-text { color: var(--success); text-align: right; }
+    .kpi-card th.red-text { color: var(--danger); text-align: right; }
+    .kpi-card td {
+      padding: 5px 0;
+      font-size: 0.82rem;
+      font-weight: 600;
+    }
+    .kpi-card td:nth-child(2), .kpi-card td:nth-child(3) { text-align: right; }
+
+    /* ═══════════ NET BAKİYE ÖZET BARI ═══════════ */
+    .net-bakiye-bar {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+      gap: 12px;
+      margin-bottom: 20px;
+    }
+    .nb-card {
+      background: #fff;
+      padding: 12px 14px;
+      border-radius: var(--radius);
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      box-shadow: var(--shadow-sm);
+      border: 1px solid var(--border-color);
+    }
+    .nb-icon {
+      width: 40px;
+      height: 40px;
+      border-radius: 10px;
+      background: #eff6ff;
+      color: var(--primary);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.15rem;
+      flex-shrink: 0;
+    }
+    .nb-info { display: flex; flex-direction: column; overflow: hidden; }
+    .nb-label { font-size: 0.65rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; }
+    .nb-value { font-size: 1.05rem; font-weight: 800; color: var(--secondary); white-space: nowrap; }
+
+    /* ═══════════ SECTION TITLE BAR ═══════════ */
+    .section-title-bar {
+      padding: 10px 16px;
+      border-radius: 10px;
+      margin-bottom: 14px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-weight: 700;
+      font-size: 0.85rem;
+      background: #fff;
+      box-shadow: var(--shadow-sm);
+      border: 1px solid var(--border-color);
+      border-left: 4px solid var(--primary);
+    }
+    .section-subtitle { font-size: 0.72rem; color: var(--text-muted); font-weight: 500; }
+
+    /* ═══════════ PANELS & GRIDS ═══════════ */
+    .grid-row { display: grid; gap: 16px; margin-bottom: 20px; }
+    .row-4-cols { grid-template-columns: repeat(4, 1fr); }
+    .row-3-cols { grid-template-columns: repeat(3, 1fr); }
+    .row-2-cols { grid-template-columns: repeat(2, 1fr); }
+    .row-1-cols { grid-template-columns: 1fr; }
+
+    @media (max-width: 1200px) {
+      .row-4-cols, .row-3-cols { grid-template-columns: repeat(2, 1fr); }
+    }
+    @media (max-width: 768px) {
+      .row-4-cols, .row-3-cols, .row-2-cols { grid-template-columns: 1fr; }
+    }
+
+    .panel-card {
+      background: #fff;
+      border-radius: var(--radius);
+      box-shadow: var(--shadow-sm);
+      border: 1px solid var(--border-color);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+    .panel-header {
+      padding: 12px 18px;
+      border-bottom: 1px solid #f1f5f9;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: #fafafa;
+    }
+    .panel-header h2 {
+      font-size: 0.88rem;
+      font-weight: 800;
+      color: var(--secondary);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .panel-header i.header-icon {
+      padding: 6px;
+      border-radius: 6px;
+      background: rgba(37,99,235,0.08);
+      color: var(--primary);
+      font-size: 0.85rem;
+    }
+    .panel-body { padding: 14px; flex: 1; }
+
+    /* ═══════════ DATA TABLES ═══════════ */
+    .table-responsive {
+      overflow-x: auto;
+      background: #fff;
+    }
+    .data-table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+    .data-table th {
+      text-align: left;
+      padding: 10px 14px;
+      font-size: 0.75rem;
+      font-weight: 700;
+      color: var(--text-muted);
+      background: #f8fafc;
+      border-bottom: 2px solid #e2e8f0;
+      text-transform: uppercase;
+      white-space: nowrap;
+      letter-spacing: 0.3px;
+    }
+    .data-table td {
+      padding: 9px 14px;
+      border-bottom: 1px solid #f1f5f9;
+      font-size: 0.82rem;
+      color: var(--secondary);
+      vertical-align: middle;
+      white-space: nowrap;
+    }
+    .data-table tr:hover td {
+      background: rgba(37,99,235,0.02);
+    }
+    .data-table td.ag-num { text-align: right; font-weight: 500; font-family: 'JetBrains Mono', monospace; }
+    .data-table td.ag-total { text-align: right; font-weight: 700; background: #f8fafc; font-family: 'JetBrains Mono', monospace; }
+    .data-table td.ag-sum { text-align: right; font-weight: 800; color: var(--secondary); font-family: 'JetBrains Mono', monospace; }
+    .data-table td.ag-sum-total { text-align: right; font-weight: 800; background: #e2e8f0; font-family: 'JetBrains Mono', monospace; }
+
+    /* Aging Table specific */
+    .aging-table th { text-align: center; }
+    .aging-table th:first-child { text-align: left; }
+
+    /* ═══════════ VIEW CONTAINER TOGGLE ═══════════ */
+    .erp-view-container { display: none; }
+    .erp-view-container.active { display: block; animation: fadeIn 0.2s ease; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: translateY(0); } }
+
+    /* SCROLLBAR */
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+    ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+  </style>
+</head>
+<body>
+  <script>
+    if (sessionStorage.getItem('logoCrmAuth') !== '1') {
+      window.location.replace('/login.html');
+    }
+    window.API_BASE = '/api';
+  </script>
+
+  <!-- ═══════════ SIDEBAR NAVIGATION ═══════════ -->
+  <aside class="sidebar">
+    <div class="sidebar-logo">
+      <div class="sidebar-logo-icon"><i class="fa-solid fa-chart-pie"></i></div>
+      <div class="sidebar-logo-text">
+        <span>LOGO ERP</span>
+        <small>YÖNETİM & HAZİNE</small>
+      </div>
+    </div>
+
+    <nav class="sidebar-nav">
+      <!-- 1. DASHBOARD (EN ÜSTTE) -->
+      <a class="nav-item active erp-menu-link" onclick="switchErpView('view-dashboard', this)">
+        <i class="fa-solid fa-gauge-high nav-icon"></i>
+        <span>DASHBOARD (ÖZET)</span>
+      </a>
+
+      <!-- 2. CARİ YÖNETİMİ -->
+      <div class="nav-item parent-nav" onclick="toggleAccordion(this)">
+        <div style="display:flex;align-items:center;gap:10px;">
+          <i class="fa-solid fa-users nav-icon"></i>
+          <span>CARİ YÖNETİMİ</span>
+        </div>
+        <i class="fa-solid fa-chevron-right chevron-icon"></i>
+      </div>
+      <div class="submenu-container">
+        <a class="nav-item erp-menu-link" onclick="switchErpView('view-cari-list', this)">Cari Kartlar Listesi</a>
+        <a class="nav-item erp-menu-link" onclick="switchErpView('view-cari-receivables', this)">Alacaklı Cari Listesi</a>
+        <a class="nav-item erp-menu-link" onclick="switchErpView('view-cari-payables', this)">Borçlu Cari Listesi</a>
+        <a class="nav-item erp-menu-link" onclick="switchErpView('view-debt-tracking', this)">Borç Takip Raporu</a>
+        <a class="nav-item erp-menu-link" onclick="switchErpView('view-risk-status', this)">Risk Durum Raporu</a>
+      </div>
+
+      <!-- 3. SATIŞ YÖNETİMİ -->
+      <div class="nav-item parent-nav" onclick="toggleAccordion(this)">
+        <div style="display:flex;align-items:center;gap:10px;">
+          <i class="fa-solid fa-cart-shopping nav-icon"></i>
+          <span>SATIŞ YÖNETİMİ</span>
+        </div>
+        <i class="fa-solid fa-chevron-right chevron-icon"></i>
+      </div>
+      <div class="submenu-container">
+        <a class="nav-item erp-menu-link" onclick="switchErpView('view-sales-orders', this)">Satış Siparişleri</a>
+        <a class="nav-item erp-menu-link" onclick="switchErpView('view-sales-dispatches', this)">Satış İrsaliyeleri</a>
+        <a class="nav-item erp-menu-link" onclick="switchErpView('view-sales-invoices', this)">Satış Faturaları</a>
+        <a class="nav-item erp-menu-link" onclick="switchErpView('view-sales-profitability', this)">Satış Karlılık Raporu</a>
+      </div>
+
+      <!-- 4. SATINALMA YÖNETİMİ -->
+      <div class="nav-item parent-nav" onclick="toggleAccordion(this)">
+        <div style="display:flex;align-items:center;gap:10px;">
+          <i class="fa-solid fa-basket-shopping nav-icon"></i>
+          <span>SATINALMA YÖNETİMİ</span>
+        </div>
+        <i class="fa-solid fa-chevron-right chevron-icon"></i>
+      </div>
+      <div class="submenu-container">
+        <a class="nav-item erp-menu-link" onclick="switchErpView('view-purchase-orders', this)">Alış Siparişleri</a>
+        <a class="nav-item erp-menu-link" onclick="switchErpView('view-purchase-dispatches', this)">Alış İrsaliyeleri</a>
+        <a class="nav-item erp-menu-link" onclick="switchErpView('view-purchase-invoices', this)">Alış Faturaları</a>
+        <a class="nav-item erp-menu-link" onclick="switchErpView('view-purchase-focused-caris', this)">Alış Ağırlıklı Cariler</a>
+      </div>
+
+      <!-- 5. STOK YÖNETİMİ -->
+      <div class="nav-item parent-nav" onclick="toggleAccordion(this)">
+        <div style="display:flex;align-items:center;gap:10px;">
+          <i class="fa-solid fa-box nav-icon"></i>
+          <span>STOK YÖNETİMİ</span>
+        </div>
+        <i class="fa-solid fa-chevron-right chevron-icon"></i>
+      </div>
+      <div class="submenu-container">
+        <a class="nav-item erp-menu-link" onclick="switchErpView('view-stock-list', this)">Stok & Malzeme (Ambar Detaylı)</a>
+        <a class="nav-item erp-menu-link" onclick="switchErpView('view-fifo-cost', this)">FIFO Maliyet Raporu</a>
+      </div>
+
+      <!-- 6. FİNANS & HAZİNE -->
+      <div class="nav-item parent-nav" onclick="toggleAccordion(this)">
+        <div style="display:flex;align-items:center;gap:10px;">
+          <i class="fa-solid fa-wallet nav-icon"></i>
+          <span>FİNANS & HAZİNE</span>
+        </div>
+        <i class="fa-solid fa-chevron-right chevron-icon"></i>
+      </div>
+      <div class="submenu-container">
+        <a class="nav-item erp-menu-link" onclick="switchErpView('view-avg-maturity', this)">Cari Ortalama Vade Raporu</a>
+        <a class="nav-item erp-menu-link" onclick="switchErpView('view-vade-takip', this)">Vade Takip Analizi</a>
+        <a class="nav-item erp-menu-link" onclick="switchErpView('view-gider-takip', this)">Aylık Gider & Fatura Takibi</a>
+      </div>
+
+      <!-- 7. BANKALAR -->
+      <div class="nav-item parent-nav" onclick="toggleAccordion(this)">
+        <div style="display:flex;align-items:center;gap:10px;">
+          <i class="fa-solid fa-building-columns nav-icon"></i>
+          <span>BANKALAR</span>
+        </div>
+        <i class="fa-solid fa-chevron-right chevron-icon"></i>
+      </div>
+      <div class="submenu-container">
+        <a class="nav-item erp-menu-link" onclick="switchErpView('view-banks', this)">Bankalar Listesi</a>
+        <a class="nav-item erp-menu-link" onclick="switchErpView('view-bank-accounts', this)">Banka Hesapları</a>
+        <a class="nav-item erp-menu-link" onclick="switchErpView('view-bank-transactions', this)">Hesap Hareketleri</a>
+      </div>
+
+      <!-- 8. ÇEK & SENET -->
+      <div class="nav-item parent-nav" onclick="toggleAccordion(this)">
+        <div style="display:flex;align-items:center;gap:10px;">
+          <i class="fa-solid fa-money-check nav-icon"></i>
+          <span>ÇEK & SENET</span>
+        </div>
+        <i class="fa-solid fa-chevron-right chevron-icon"></i>
+      </div>
+      <div class="submenu-container">
+        <a class="nav-item erp-menu-link" onclick="switchErpView('view-customer-checks', this)">Müşteri Çekleri</a>
+        <a class="nav-item erp-menu-link" onclick="switchErpView('view-our-checks', this)">Kendi Çeklerimiz</a>
+        <a class="nav-item erp-menu-link" onclick="switchErpView('view-check-maturities', this)">Çek Vadeleri Raporu</a>
+      </div>
+
+      <!-- 9. CRM & HEDEF -->
+      <div class="nav-item parent-nav" onclick="toggleAccordion(this)">
+        <div style="display:flex;align-items:center;gap:10px;">
+          <i class="fa-solid fa-bullseye nav-icon"></i>
+          <span>CRM & HEDEF</span>
+        </div>
+        <i class="fa-solid fa-chevron-right chevron-icon"></i>
+      </div>
+      <div class="submenu-container">
+        <a class="nav-item erp-menu-link" onclick="switchErpView('view-budget-management', this)">Bütçe Yönetimi</a>
+        <a class="nav-item erp-menu-link" onclick="switchErpView('view-musteri-crm', this)">Müşteri CRM</a>
+      </div>
+
+      <!-- 10. SİSTEM -->
+      <div class="nav-item parent-nav" onclick="toggleAccordion(this)">
+        <div style="display:flex;align-items:center;gap:10px;">
+          <i class="fa-solid fa-gear nav-icon"></i>
+          <span>SİSTEM</span>
+        </div>
+        <i class="fa-solid fa-chevron-right chevron-icon"></i>
+      </div>
+      <div class="submenu-container">
+        <a class="nav-item erp-menu-link" onclick="switchErpView('view-sms', this)">İşlemler (SMS / E-Posta / PDF)</a>
+        <a class="nav-item erp-menu-link" onclick="switchErpView('view-live-console', this)">Canlı Bot Konsolu</a>
+      </div>
+
+      <div class="nav-spacer"></div>
+
+      <div class="sidebar-footer">
+        <a class="nav-item" onclick="window.close();" style="color:#f87171;">
+          <i class="fa-solid fa-power-off nav-icon"></i>
+          <span>Çıkış Yap</span>
+        </a>
+      </div>
+    </nav>
+  </aside>
+
+  <!-- ═══════════ MAIN CONTENT ═══════════ -->
+  <main class="main-content">
+    
+    <!-- TOP HEADER -->
+    <header class="top-header">
+      <div class="header-left">
+        <h1>
+          <i class="fa-solid fa-gauge-high" id="viewHeaderIcon"></i>
+          <span id="viewTitle">DASHBOARD (ÖZET)</span>
+        </h1>
+      </div>
+      <div class="header-actions">
+        <div class="ref-date-block">
+          <label style="font-weight:600;color:var(--text-muted);"><i class="fa-regular fa-calendar"></i> Tarih:</label>
+          <input type="date" id="dashBasTarih" class="date-input">
+          <span>—</span>
+          <input type="date" id="dashBitTarih" class="date-input">
+          <button class="mini-btn" onclick="setDashDate('today')">Bugün</button>
+          <button class="mini-btn" onclick="setDashDate('month')">Ay Başı</button>
+          <button class="premium-btn" style="padding:4px 10px;font-size:0.75rem;" onclick="loadDashboardData()"><i class="fa-solid fa-rotate"></i> Yenile</button>
+        </div>
+        <div class="header-user">
+          <div class="user-avatar"><i class="fa-solid fa-user"></i></div>
+          <span id="portalFirmInfo">Firma: 001 | Dönem: 01</span>
+        </div>
+      </div>
+    </header>
+
+    <!-- ════════════════════════════════════════════════════════ -->
+    <!-- VIEW: DASHBOARD (ÖZET)                                  -->
+    <!-- ════════════════════════════════════════════════════════ -->
+    <div id="view-dashboard" class="erp-view-container active">
+      
+      <!-- 1. DÖVİZ BAZLI KPI KARTLARI -->
+      <div class="kpi-container">
+        <div class="kpi-card">
+          <div class="kpi-currency-bg">₺</div>
+          <h3><span>TÜRK LİRASI (TL)</span> <i class="fa-solid fa-turkish-lira-sign" style="color:var(--primary);"></i></h3>
+          <table>
+            <thead><tr><th>Kalem</th><th class="green-text">Giriş</th><th class="red-text">Çıkış</th></tr></thead>
+            <tbody id="kpi-tl-body">
+              <tr><td>Kasa / Banka</td><td style="color:var(--success);">-</td><td style="color:var(--danger);">-</td></tr>
+              <tr><td>Ticari Fatura</td><td style="color:var(--success);">-</td><td style="color:var(--danger);">-</td></tr>
+              <tr><td>Çek / Senet</td><td style="color:var(--success);">-</td><td style="color:var(--danger);">-</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="kpi-card">
+          <div class="kpi-currency-bg">$</div>
+          <h3><span>DOLAR (USD)</span> <i class="fa-solid fa-dollar-sign" style="color:var(--success);"></i></h3>
+          <table>
+            <thead><tr><th>Kalem</th><th class="green-text">Giriş</th><th class="red-text">Çıkış</th></tr></thead>
+            <tbody id="kpi-usd-body">
+              <tr><td>Kasa / Banka</td><td style="color:var(--success);">-</td><td style="color:var(--danger);">-</td></tr>
+              <tr><td>Ticari Fatura</td><td style="color:var(--success);">-</td><td style="color:var(--danger);">-</td></tr>
+              <tr><td>Çek / Senet</td><td style="color:var(--success);">-</td><td style="color:var(--danger);">-</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="kpi-card">
+          <div class="kpi-currency-bg">€</div>
+          <h3><span>EURO (EUR)</span> <i class="fa-solid fa-euro-sign" style="color:var(--info);"></i></h3>
+          <table>
+            <thead><tr><th>Kalem</th><th class="green-text">Giriş</th><th class="red-text">Çıkış</th></tr></thead>
+            <tbody id="kpi-eur-body">
+              <tr><td>Kasa / Banka</td><td style="color:var(--success);">-</td><td style="color:var(--danger);">-</td></tr>
+              <tr><td>Ticari Fatura</td><td style="color:var(--success);">-</td><td style="color:var(--danger);">-</td></tr>
+              <tr><td>Çek / Senet</td><td style="color:var(--success);">-</td><td style="color:var(--danger);">-</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="kpi-card">
+          <div class="kpi-currency-bg">£</div>
+          <h3><span>STERLİN (GBP)</span> <i class="fa-solid fa-sterling-sign" style="color:var(--purple);"></i></h3>
+          <table>
+            <thead><tr><th>Kalem</th><th class="green-text">Giriş</th><th class="red-text">Çıkış</th></tr></thead>
+            <tbody id="kpi-gbp-body">
+              <tr><td>Kasa / Banka</td><td style="color:var(--success);">-</td><td style="color:var(--danger);">-</td></tr>
+              <tr><td>Ticari Fatura</td><td style="color:var(--success);">-</td><td style="color:var(--danger);">-</td></tr>
+              <tr><td>Çek / Senet</td><td style="color:var(--success);">-</td><td style="color:var(--danger);">-</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- 2. NET BAKİYE BARI -->
+      <div class="net-bakiye-bar">
+        <div class="nb-card">
+          <div class="nb-icon"><i class="fa-solid fa-cash-register"></i></div>
+          <div class="nb-info">
+            <span class="nb-label">KASA TOPLAMI</span>
+            <span class="nb-value" id="nb-kasa">0,00 ₺</span>
+          </div>
+        </div>
+        <div class="nb-card">
+          <div class="nb-icon" style="color:var(--info);background:#eff6ff;"><i class="fa-solid fa-building-columns"></i></div>
+          <div class="nb-info">
+            <span class="nb-label">BANKA TOPLAMI</span>
+            <span class="nb-value" id="nb-banka">0,00 ₺</span>
+          </div>
+        </div>
+        <div class="nb-card">
+          <div class="nb-icon" style="color:var(--success);background:#ecfdf5;"><i class="fa-solid fa-wallet"></i></div>
+          <div class="nb-info">
+            <span class="nb-label">NET ELİMDEKİ NAKİT</span>
+            <span class="nb-value" id="nb-net" style="color:var(--success);">0,00 ₺</span>
+          </div>
+        </div>
+        <div class="nb-card">
+          <div class="nb-icon" style="color:var(--warning);background:#fffbeb;"><i class="fa-solid fa-money-check"></i></div>
+          <div class="nb-info">
+            <span class="nb-label">MÜŞTERİ ÇEKLERİ</span>
+            <span class="nb-value" id="nb-cek">0,00 ₺</span>
+          </div>
+        </div>
+        <div class="nb-card">
+          <div class="nb-icon" style="color:var(--danger);background:#fef2f2;"><i class="fa-solid fa-money-check-dollar"></i></div>
+          <div class="nb-info">
+            <span class="nb-label">KENDİ ÇEKLERİMİZ</span>
+            <span class="nb-value" id="nb-kendi-cek" style="color:var(--danger);">0,00 ₺</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- 3. BÖLÜM: ANLIK POZİSYON TABLOLARI -->
+      <div class="grid-row row-2-cols">
+        <div class="panel-card">
+          <div class="panel-header">
+            <h2><i class="fa-solid fa-building-columns header-icon"></i> Banka Bakiyeleri</h2>
+            <span style="font-size:0.75rem;color:var(--text-muted);font-weight:600;" id="bankaCountBadge">0 Banka</span>
+          </div>
+          <div class="panel-body table-responsive" style="padding:0;">
+            <table class="data-table">
+              <thead><tr><th>Banka Adı</th><th style="text-align:right;">TL Bakiye</th><th style="text-align:right;">USD</th><th style="text-align:right;">EUR</th></tr></thead>
+              <tbody id="dashBankaTable"><tr><td colspan="4" style="text-align:center;padding:20px;"><i class="fa-solid fa-circle-notch fa-spin"></i> Yükleniyor...</td></tr></tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="panel-card">
+          <div class="panel-header">
+            <h2><i class="fa-solid fa-arrow-trend-up header-icon" style="color:var(--success);"></i> En Yüksek Alacaklı Cariler (İlk 5)</h2>
+            <span style="font-size:0.75rem;color:var(--text-muted);font-weight:600;">Top 5</span>
+          </div>
+          <div class="panel-body table-responsive" style="padding:0;">
+            <table class="data-table">
+              <thead><tr><th>Cari Kodu / Ünvanı</th><th style="text-align:right;">Açık Bakiye (₺)</th></tr></thead>
+              <tbody id="dashReceivablesTable"><tr><td colspan="2" style="text-align:center;padding:20px;"><i class="fa-solid fa-circle-notch fa-spin"></i> Yükleniyor...</td></tr></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- 4. BÖLÜM: YAŞLANDIRMA PROJEKSİYONLARI -->
+      <div class="section-title-bar">
+        <span><i class="fa-solid fa-clock-rotate-left" style="color:var(--primary);margin-right:6px;"></i> BEKLENEN TAHSİLAT & ÖDEME YAŞLANDIRMA PROJEKSİYONU</span>
+        <span class="section-subtitle">Vade tarihine göre gruplanmış nakit akış tablosu</span>
+      </div>
+
+      <div class="grid-row row-1-cols">
+        <div class="panel-card">
+          <div class="panel-body table-responsive" style="padding:0;">
+            <table class="data-table aging-table">
+              <thead>
+                <tr>
+                  <th style="text-align:left;width:22%;">Kanal</th>
+                  <th>0-30 GÜN</th>
+                  <th>31-60 GÜN</th>
+                  <th>61-90 GÜN</th>
+                  <th>91-120 GÜN</th>
+                  <th>120+ GÜN</th>
+                  <th style="background:#f1f5f9;">TOPLAM</th>
+                </tr>
+              </thead>
+              <tbody id="dashAgingTable">
+                <tr><td colspan="7" style="text-align:center;padding:20px;"><i class="fa-solid fa-circle-notch fa-spin"></i> Yükleniyor...</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- 5. BÖLÜM: AYLIK SATIŞ & ALIŞ CİRO DETAYI -->
+      <div class="section-title-bar" style="margin-top:10px;">
+        <span><i class="fa-solid fa-chart-line" style="color:var(--purple);margin-right:6px;"></i> AYLIK SATIŞ & ALIŞ CİRO PERFORMANSI</span>
+        <span class="section-subtitle">Dönem içi aylık net ciro ve kar/zarar farkı</span>
+      </div>
+
+      <div class="grid-row row-1-cols">
+        <div class="panel-card">
+          <div class="panel-body table-responsive" style="padding:0;">
+            <table class="data-table" id="dashSalesTable">
+              <thead>
+                <tr>
+                  <th>TÜR</th>
+                  <th style="text-align:right;">Ocak</th>
+                  <th style="text-align:right;">Şubat</th>
+                  <th style="text-align:right;">Mart</th>
+                  <th style="text-align:right;">Nisan</th>
+                  <th style="text-align:right;">Mayıs</th>
+                  <th style="text-align:right;">Haziran</th>
+                  <th style="text-align:right;">Temmuz</th>
+                  <th style="text-align:right;">Ağustos</th>
+                  <th style="text-align:right;">Eylül</th>
+                  <th style="text-align:right;">Ekim</th>
+                  <th style="text-align:right;">Kasım</th>
+                  <th style="text-align:right;">Aralık</th>
+                  <th style="text-align:right;background:#f1f5f9;font-weight:800;">YILLIK TOPLAM</th>
+                </tr>
+              </thead>
+              <tbody id="dashSalesTableBody">
+                <tr><td colspan="14" style="text-align:center;padding:20px;"><i class="fa-solid fa-circle-notch fa-spin"></i> Yükleniyor...</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- ════════════════════════════════════════════════════════ -->
+    <!-- DYNAMIC REPORT VIEW CONTAINERS                           -->
+    <!-- ════════════════════════════════════════════════════════ -->
+    <div id="view-cari-list" class="erp-view-container"></div>
+    <div id="view-cari-receivables" class="erp-view-container"></div>
+    <div id="view-cari-payables" class="erp-view-container"></div>
+    <div id="view-debt-tracking" class="erp-view-container"></div>
+    <div id="view-risk-status" class="erp-view-container"></div>
+    
+    <div id="view-sales-orders" class="erp-view-container"></div>
+    <div id="view-sales-dispatches" class="erp-view-container"></div>
+    <div id="view-sales-invoices" class="erp-view-container"></div>
+    <div id="view-sales-profitability" class="erp-view-container"></div>
+
+    <div id="view-purchase-orders" class="erp-view-container"></div>
+    <div id="view-purchase-dispatches" class="erp-view-container"></div>
+    <div id="view-purchase-invoices" class="erp-view-container"></div>
+    <div id="view-purchase-focused-caris" class="erp-view-container"></div>
+
+    <div id="view-stock-list" class="erp-view-container"></div>
+    <div id="view-fifo-cost" class="erp-view-container"></div>
+
+    <div id="view-avg-maturity" class="erp-view-container"></div>
+    <div id="view-vade-takip" class="erp-view-container"></div>
+    <div id="view-gider-takip" class="erp-view-container"></div>
+
+    <div id="view-banks" class="erp-view-container"></div>
+    <div id="view-bank-accounts" class="erp-view-container"></div>
+    <div id="view-bank-transactions" class="erp-view-container"></div>
+
+    <div id="view-customer-checks" class="erp-view-container"></div>
+    <div id="view-our-checks" class="erp-view-container"></div>
+    <div id="view-check-maturities" class="erp-view-container"></div>
+
+    <div id="view-budget-management" class="erp-view-container"></div>
+    <div id="view-musteri-crm" class="erp-view-container"></div>
+
+    <!-- SİSTEM GÖRÜNÜMLERİ -->
+    <div id="view-live-console" class="erp-view-container">
+      <div class="panel-card">
+        <div class="panel-header">
+          <h2><i class="fa-solid fa-terminal header-icon"></i> Canlı Logo Bot Terminali</h2>
+          <button class="mini-btn" onclick="clearConsole()"><i class="fa-solid fa-trash"></i> Temizle</button>
+        </div>
+        <div class="panel-body" style="padding:0;">
+          <textarea id="portalConsoleOutput" style="width:100%;height:500px;background:#0f172a;color:#38bdf8;font-family:'JetBrains Mono',monospace;padding:16px;border:none;font-size:12px;line-height:1.6;resize:none;" readonly>Sisteme bağlanıldı. Canlı loglar bekleniyor...</textarea>
+        </div>
+      </div>
+    </div>
+
+    <div id="view-sms" class="erp-view-container">
+      <div class="panel-card">
+        <div class="panel-header">
+          <h2><i class="fa-solid fa-envelope header-icon"></i> Otomatik Gönderim ve Belge İşlemleri (SMS / E-Posta / PDF)</h2>
+        </div>
+        <div class="panel-body" style="padding:24px;">
+          <p style="color:var(--text-muted);font-size:0.95rem;margin-bottom:16px;">
+            Bu ekran üzerinden Logo ERP kayıtlarına ait Mutabakat Mektubu, Ekstre, Fatura ve İrsaliye PDF'lerini carilere SMS veya E-Posta ile toplu olarak gönderebilirsiniz.
+          </p>
+          <div style="display:flex;gap:12px;">
+            <button class="premium-btn" onclick="window.open('/document-viewer.html', '_blank')"><i class="fa-solid fa-file-invoice"></i> Belge Yönetimi Modülünü Aç</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </main>
+
+  <script src="js/erp-queries.js?v=20260829"></script>
+  <script src="js/erp-portal.js?v=20260829"></script>
+  
+  <script>
+    // Accordion Logic
+    function toggleAccordion(element) {
+      const submenu = element.nextElementSibling;
+      if (!submenu || !submenu.classList.contains('submenu-container')) return;
+      const isOpen = submenu.style.display === 'flex';
+      
+      // Close all other open submenus
+      document.querySelectorAll('.submenu-container').forEach(s => s.style.display = 'none');
+      document.querySelectorAll('.parent-nav').forEach(p => p.classList.remove('open'));
+      
+      if (!isOpen) {
+        submenu.style.display = 'flex';
+        element.classList.add('open');
+      }
+    }
+
+    // Initialize dates on load
+    document.addEventListener('DOMContentLoaded', () => {
+      const today = new Date().toISOString().split('T')[0];
+      const basInput = document.getElementById('dashBasTarih');
+      const bitInput = document.getElementById('dashBitTarih');
+      if (basInput) basInput.value = '2026-01-01';
+      if (bitInput) bitInput.value = today;
+      loadDashboardData();
+    });
+
+    function setDashDate(type) {
+      const today = new Date();
+      const todayStr = today.toISOString().split('T')[0];
+      const bitInput = document.getElementById('dashBitTarih');
+      const basInput = document.getElementById('dashBasTarih');
+      if (bitInput) bitInput.value = todayStr;
+      if (type === 'today') {
+        if (basInput) basInput.value = todayStr;
+      } else if (type === 'month') {
+        const firstDay = new Date(today.getFullYear(), today.getMonth(), 1).toISOString().split('T')[0];
+        if (basInput) basInput.value = firstDay;
+      }
+      loadDashboardData();
+    }
+  </script>
+</body>
+</html>

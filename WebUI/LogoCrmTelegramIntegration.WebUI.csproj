@@ -1,0 +1,69 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <UseWindowsForms>true</UseWindowsForms>
+    <NoWarn>$(NoWarn);CS0121</NoWarn>
+    <AssemblyName>Logo Asistan Bot</AssemblyName>
+    <GenerateDocumentationFile>false</GenerateDocumentationFile>
+    <OpenApiGenerateDocuments>false</OpenApiGenerateDocuments>
+    <DisableImplicitOpenApiSourceGenerator>true</DisableImplicitOpenApiSourceGenerator>
+    <RunAnalyzersDuringBuild>false</RunAnalyzersDuringBuild>
+    <RunAnalyzersDuringLiveAnalysis>false</RunAnalyzersDuringLiveAnalysis>
+    <RunAnalyzers>false</RunAnalyzers>
+    <TargetFramework>net10.0-windows</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <OutputType>WinExe</OutputType>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Remove="**\* (*).cs" />
+  </ItemGroup>
+
+
+
+  <ItemGroup>
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="appsettings.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Include="wwwroot\**\*">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Include="Templates\**\*">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Include="Scripts\**\*">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Application\LogoCrmTelegramIntegration.Application.csproj" />
+    <ProjectReference Include="..\Infrastructure\LogoCrmTelegramIntegration.Infrastructure.csproj" />
+    <ProjectReference Include="..\Domain\LogoCrmTelegramIntegration.Domain.csproj" />
+  </ItemGroup>
+
+  <Target Name="RemoveOpenApiAnalyzer" BeforeTargets="CoreCompile">
+    <ItemGroup>
+      <Analyzer Remove="@(Analyzer)" Condition="$([System.String]::Copy('%(Analyzer.Identity)').Contains('Microsoft.AspNetCore.OpenApi.SourceGenerators'))" />
+    </ItemGroup>
+  </Target>
+
+  <!-- Publish sonrasi bat dosyalarini otomatik olustur -->
+  <Target Name="CreateStartupScripts" AfterTargets="Publish">
+    <PropertyGroup>
+      <StartBotBat>@echo off&#xA;cd /d &quot;%~dp0&quot;&#xA;start &quot;&quot; &quot;Logo Asistan Bot.exe&quot;&#xA;</StartBotBat>
+      <InstallBat>@echo off&#xA;setlocal&#xA;set &quot;BAT_PATH=%~dp0start-bot.bat&quot;&#xA;echo.&#xA;echo ============================================&#xA;echo   Logo Asistan Bot - Otomatik Baslangic&#xA;echo ============================================&#xA;echo.&#xA;echo Kurulum Klasoru: %~dp0&#xA;echo.&#xA;reg add &quot;HKCU\SOFTWARE\Microsoft\Windows\CurrentVersion\Run&quot; /v &quot;LogoAsistanBot&quot; /t REG_SZ /d &quot;\&quot;%BAT_PATH%\&quot;&quot; /f&#xA;if %ERRORLEVEL% == 0 (&#xA;    echo [OK] Otomatik baslangic kaydedildi!&#xA;    echo      Her oturum acilisinda bot otomatik baslaycak.&#xA;) else (&#xA;    echo [HATA] Kayit yapilamadi.&#xA;)&#xA;echo.&#xA;echo Botu simdi baslatmak ister misiniz? (E/H)&#xA;set /p ANSWER=&#xA;if /I &quot;%ANSWER%&quot;==&quot;E&quot; call &quot;%BAT_PATH%&quot;&#xA;echo.&#xA;pause&#xA;endlocal&#xA;</InstallBat>
+      <UninstallBat>@echo off&#xA;echo.&#xA;echo Otomatik baslangic kaldiriliyor...&#xA;reg delete &quot;HKCU\SOFTWARE\Microsoft\Windows\CurrentVersion\Run&quot; /v &quot;LogoAsistanBot&quot; /f&#xA;if %ERRORLEVEL% == 0 (echo [OK] Kaldirildi.) else (echo [BILGI] Kayit bulunamadi.)&#xA;echo.&#xA;pause&#xA;</UninstallBat>
+    </PropertyGroup>
+    <WriteLinesToFile File="$(PublishDir)start-bot.bat" Lines="$(StartBotBat)" Overwrite="true" />
+    <WriteLinesToFile File="$(PublishDir)install-autostart.bat" Lines="$(InstallBat)" Overwrite="true" />
+    <WriteLinesToFile File="$(PublishDir)uninstall-autostart.bat" Lines="$(UninstallBat)" Overwrite="true" />
+    <Message Text="✅ Startup bat dosyalari olusturuldu: $(PublishDir)" Importance="high" />
+  </Target>
+
+</Project>

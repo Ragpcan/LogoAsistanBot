@@ -1,0 +1,14 @@
+<Solution>
+  <Folder Name="/Application/">
+    <Project Path="Application/LogoCrmTelegramIntegration.Application.csproj" />
+  </Folder>
+  <Folder Name="/Domain/">
+    <Project Path="Domain/LogoCrmTelegramIntegration.Domain.csproj" />
+  </Folder>
+  <Folder Name="/Infrastructure/">
+    <Project Path="Infrastructure/LogoCrmTelegramIntegration.Infrastructure.csproj" />
+  </Folder>
+  <Folder Name="/WebUI/">
+    <Project Path="WebUI/LogoCrmTelegramIntegration.WebUI.csproj" />
+  </Folder>
+</Solution>

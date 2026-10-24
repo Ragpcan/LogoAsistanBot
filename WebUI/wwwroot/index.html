@@ -1,0 +1,946 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Logo Asistan Bot - Yönetim Paneli</title>
+  
+  <!-- Google Fonts & FontAwesome -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  
+  <style>
+    * { box-sizing: border-box; }
+    body { font-family: 'Plus Jakarta Sans', sans-serif; background-color: #f8fafc; color: #1e293b; margin: 0; padding: 0; }
+    .container { max-width: 1300px; margin: 0 auto; padding: 1.5rem; }
+    .navbar { background: #ffffff; border-bottom: 1px solid #e2e8f0; padding: 0.85rem 2rem; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
+    .brand-title { font-size: 1.2rem; font-weight: 800; color: #0f172a; }
+    .brand-subtitle { font-size: 0.78rem; color: #64748b; font-weight: 500; }
+    
+    .tabs-header { display: flex; gap: 0.4rem; border-bottom: 2px solid #e2e8f0; margin-bottom: 1.5rem; background: #ffffff; padding: 0.5rem 0.5rem 0 0.5rem; border-radius: 8px 8px 0 0; flex-wrap: wrap; }
+    .tab-btn { background: transparent; border: none; padding: 0.8rem 1.2rem; font-weight: 600; font-size: 0.9rem; color: #64748b; cursor: pointer; border-bottom: 3px solid transparent; transition: all 0.2s ease; display: inline-flex; align-items: center; gap: 0.5rem; white-space: nowrap; }
+    .tab-btn:hover { color: #2563eb; background: #f1f5f9; border-radius: 6px 6px 0 0; }
+    .tab-btn.active { color: #2563eb; border-bottom-color: #2563eb; font-weight: 700; background: #eff6ff; border-radius: 6px 6px 0 0; }
+    
+    .tab-content { display: none; }
+    .tab-content.active { display: block; }
+    
+    .card { background: #ffffff; border-radius: 12px; padding: 1.5rem; margin-bottom: 1.5rem; border: 1px solid #e2e8f0; box-shadow: 0 2px 4px rgba(0,0,0,0.02); }
+    .card-title { font-size: 1.1rem; font-weight: 700; color: #0f172a; margin-bottom: 1rem; display: flex; align-items: center; gap: 0.6rem; }
+    
+    .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(380px, 1fr)); gap: 1.5rem; }
+    .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; }
+    .grid-3 { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1rem; }
+    
+    .form-group { margin-bottom: 1.1rem; }
+    .form-group label { display: block; font-weight: 600; font-size: 0.88rem; color: #334155; margin-bottom: 0.4rem; }
+    .form-control { width: 100%; padding: 0.65rem 0.85rem; font-size: 0.9rem; border: 1px solid #cbd5e1; border-radius: 8px; background: #ffffff; color: #0f172a; }
+    .form-control:focus { outline: none; border-color: #2563eb; box-shadow: 0 0 0 3px rgba(37,99,235,0.1); }
+    
+    .btn { padding: 0.65rem 1.3rem; font-weight: 600; font-size: 0.88rem; border-radius: 8px; border: none; cursor: pointer; display: inline-flex; align-items: center; gap: 0.5rem; transition: all 0.2s; white-space: nowrap; }
+    .btn-primary { background: #2563eb; color: #ffffff; }
+    .btn-primary:hover { background: #1d4ed8; }
+    .btn-success { background: #10b981; color: #ffffff; }
+    .btn-success:hover { background: #059669; }
+    .btn-danger { background: #ef4444; color: #ffffff; }
+    .btn-danger:hover { background: #dc2626; }
+    .btn-secondary { background: #f1f5f9; color: #334155; border: 1px solid #cbd5e1; }
+    .btn-secondary:hover { background: #e2e8f0; }
+    .btn-warning { background: #f59e0b; color: #ffffff; }
+    .btn-warning:hover { background: #d97706; }
+    
+    .status-badge { padding: 0.35rem 0.85rem; border-radius: 20px; font-size: 0.82rem; font-weight: 700; display: inline-flex; align-items: center; gap: 0.4rem; }
+    .status-badge.running { background: #d1fae5; color: #065f46; }
+    .status-badge.stopped { background: #fee2e2; color: #991b1b; }
+    .status-dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; }
+    .status-badge.running .status-dot { background: #10b981; }
+    .status-badge.stopped .status-dot { background: #ef4444; }
+
+    .alert { padding: 0.85rem 1.1rem; border-radius: 8px; font-size: 0.88rem; font-weight: 600; margin-top: 1rem; }
+    .alert-success { background: #d1fae5; color: #065f46; border: 1px solid #a7f3d0; }
+    .alert-danger { background: #fee2e2; color: #991b1b; border: 1px solid #fecaca; }
+  </style>
+</head>
+<body>
+<script>
+  (function() {
+    if (sessionStorage.getItem('logoCrmAuth') !== '1') {
+      window.location.replace('/login.html');
+    }
+  })();
+</script>
+
+  <!-- Top Navbar -->
+  <nav class="navbar">
+    <div style="display:flex; align-items:center; gap:0.8rem;">
+      <div style="width:38px; height:38px; background:#2563eb; color:#fff; border-radius:8px; display:flex; align-items:center; justify-content:center; font-size:1.1rem;"><i class="fa-solid fa-layer-group"></i></div>
+      <div>
+        <div class="brand-title">Logo Asistan Bot</div>
+        <div class="brand-subtitle">Kurumsal Telegram & ERP Entegrasyon Yönetim Paneli</div>
+      </div>
+    </div>
+    
+    <div style="display:flex; align-items:center; gap:0.75rem;">
+      <div id="botStatusBadge" class="status-badge stopped">
+        <span class="status-dot"></span>
+        <span id="botStatusText">Yükleniyor...</span>
+      </div>
+      <button id="btnQuickStart" class="btn btn-success" onclick="startBot()">
+        <i class="fa-play"></i> Başlat
+      </button>
+      <button id="btnQuickStop" class="btn btn-danger" onclick="stopBot()" style="display:none;">
+        <i class="fa-stop"></i> Durdur
+      </button>
+      <button class="btn btn-primary" onclick="openLogoErpPortal()" style="background: linear-gradient(135deg, #1e3a8a, #2563eb);" title="Logo ERP Web Portalı">
+        <i class="fa-solid fa-globe"></i> Web ERP Portalı
+      </button>
+      <span id="navUserBadge" style="font-size:0.85rem; font-weight:700; color:#475569; padding:0 0.5rem;"></span>
+      <button class="btn btn-secondary" onclick="logout()" title="Çıkış Yap">
+        <i class="fa-solid fa-right-from-bracket"></i> Çıkış
+      </button>
+    </div>
+  </nav>
+
+  <!-- Main Content Container -->
+  <div class="container">
+
+    <!-- HERO CARD: LOGO WEB ERP PORTAL LAUNCH -->
+    <div class="card" style="background: linear-gradient(135deg, #1e293b, #0f172a); color:#ffffff; border:none; box-shadow: 0 4px 16px rgba(15,23,42,0.15);">
+      <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:1rem;">
+        <div>
+          <h2 style="font-size:1.2rem; font-weight:800; margin:0 0 0.4rem 0; color:#ffffff;">
+            🌐 Kurumsal Web ERP Portalı (Canlı İşlemler)
+          </h2>
+          <p style="font-size:0.85rem; color:#94a3b8; margin:0; max-width:750px;">
+            Cari Kartlar, Satış Faturaları, İrsaliyeler, Siparişler ve Canlı Komut Konsolunu tam ekran kurumsal web portalında kullanabilirsiniz.
+          </p>
+        </div>
+        <button class="btn" onclick="openLogoErpPortal()" style="background:#f59e0b; color:#ffffff; font-weight:800; padding:0.75rem 1.5rem; border-radius:8px;">
+          <i class="fa-solid fa-up-right-from-square"></i> Web ERP Portalını Yeni Sekmede Aç
+        </button>
+      </div>
+    </div>
+    
+    <!-- Tab Navigation Header -->
+    <div class="tabs-header">
+      <button class="tab-btn active" id="navTabDashboard" onclick="switchTab('tab-dashboard', this)">
+        <i class="fa-chart-pie"></i> Canlı Panel & Siparişler
+      </button>
+      <button class="tab-btn" id="navTabSalesmen" onclick="switchTab('tab-salesmen', this)">
+        <i class="fa-user-tie"></i> Telegram Kullanıcı Yetkileri
+      </button>
+      <button class="tab-btn" id="navTabMailSms" onclick="switchTab('tab-mailsms', this)" style="border-bottom:3px solid #10b981; color:#059669; font-weight:700;">
+        <i class="fa-envelope"></i> 📧 Mail, SMS & Otomatik Gönderim
+      </button>
+      <button class="tab-btn" id="navTabReports" onclick="switchTab('tab-reports', this)" style="color:#7c3aed; font-weight:700;">
+        <i class="fa-solid fa-chart-column"></i> 📊 Akıllı Raporlar & SQL
+      </button>
+      <button class="tab-btn" id="navTabXslt" onclick="switchTab('tab-xslt', this)">
+        <i class="fa-file-code"></i> 📐 XSLT Tasarımları
+      </button>
+      <button class="tab-btn" id="navTabAdminSettings" onclick="switchTab('tab-settings', this)">
+        <i class="fa-sliders"></i> ⚙️ Admin Ayarları & Sistem Testi
+      </button>
+    </div>
+
+    <!-- TAB 1: DASHBOARD -->
+    <div id="tab-dashboard" class="tab-content active">
+      <div class="grid">
+        <div class="card">
+          <div class="card-title">
+            <i class="fa-robot" style="color:#2563eb;"></i> Bot Durum Özeti
+          </div>
+          <div style="font-size: 0.9rem; line-height: 1.8;">
+            <p><strong>Bot Kullanıcı Adı:</strong> <span id="dashBotUsername" style="color:#2563eb; font-weight:700;">@Yükleniyor</span></p>
+            <p><strong>Bot Durumu:</strong> <span id="dashBotStatusText">-</span></p>
+            <p><strong>Hedef Entegrasyon Sistemi:</strong> <span id="dashTargetSystem" style="color:#10b981; font-weight:700;">Yükleniyor...</span></p>
+            <p><strong>Hedef Veritabanı & Sunucu:</strong> <span id="dashDbName" style="color:#f59e0b; font-weight:700;">Yükleniyor...</span></p>
+          </div>
+          <div style="margin-top: 1.2rem; display:flex; gap:0.75rem;">
+            <button class="btn btn-success" onclick="startBot()"><i class="fa-play"></i> Botu Başlat</button>
+            <button class="btn btn-danger" onclick="stopBot()"><i class="fa-stop"></i> Botu Durdur</button>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-title">
+            <i class="fa-bolt" style="color:#f59e0b;"></i> Telegram Akıllı Komut Rehberi
+          </div>
+          <p style="font-size: 0.85rem; color: #64748b; margin-bottom: 0.75rem;">
+            Telegram botunuza atabileceğiniz hızlı komut örnekleri:
+          </p>
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.6rem; font-size: 0.82rem;">
+            <div style="padding:0.6rem; background:#f8fafc; border-left:3px solid #10b981; border-radius:4px;">
+              <strong style="color:#10b981;">🛒 Sipariş Ekleme:</strong><br><code>RAGIP A.001.01 20</code>
+            </div>
+            <div style="padding:0.6rem; background:#f8fafc; border-left:3px solid #2563eb; border-radius:4px;">
+              <strong style="color:#2563eb;">🚚 İrsaliye Kesme:</strong><br><code>Cari Menü -> İrsaliye Kes</code>
+            </div>
+            <div style="padding:0.6rem; background:#f8fafc; border-left:3px solid #059669; border-radius:4px;">
+              <strong style="color:#059669;">🔗 İrsaliyeye Çevir:</strong><br><code>Sipariş Detayı -> Çevir</code>
+            </div>
+            <div style="padding:0.6rem; background:#f8fafc; border-left:3px solid #0284c7; border-radius:4px;">
+              <strong style="color:#0284c7;">📄 GİB PDF İndir:</strong><br><code>/irsaliye IRS000001</code>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB 2: TELEGRAM KULLANICI YETKİLERİ -->
+    <div id="tab-salesmen" class="tab-content">
+      <div class="card">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem;">
+          <div class="card-title" style="margin:0;">
+            <i class="fa-user-tie" style="color:#2563eb;"></i> Telegram Plasiyer / Operatör Yetkileri
+          </div>
+          <button class="btn btn-primary btn-sm" onclick="openAddSalesmanModal()">
+            <i class="fa-plus"></i> Yeni Plasiyer Ekle
+          </button>
+        </div>
+        <div style="overflow-x:auto;">
+          <table style="width:100%; border-collapse:collapse; font-size:0.88rem; text-align:left;">
+            <thead>
+              <tr style="background:#f1f5f9; border-bottom:2px solid #e2e8f0;">
+                <th style="padding:0.75rem;">Chat ID</th>
+                <th style="padding:0.75rem;">Kullanıcı / Plasiyer</th>
+                <th style="padding:0.75rem;">Cari Yetki Kodu</th>
+                <th style="padding:0.75rem;">Malzeme Yetki Kodu</th>
+                <th style="padding:0.75rem;">Sipariş Yetki Kodu</th>
+                <th style="padding:0.75rem;">İşlemler</th>
+              </tr>
+            </thead>
+            <tbody id="salesmenTableBody">
+              <tr><td colspan="6" style="padding:1rem; text-align:center; color:#94a3b8;">Yükleniyor...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="card">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem;">
+          <div class="card-title" style="margin:0;">
+            <i class="fa-users-gear" style="color:#10b981;"></i> Backend Web Paneli Kullanıcıları
+          </div>
+          <button class="btn btn-success btn-sm" onclick="openAddWebUserModal()">
+            <i class="fa-user-plus"></i> Yeni Web Kullanıcısı Ekle
+          </button>
+        </div>
+        <div style="overflow-x:auto;">
+          <table style="width:100%; border-collapse:collapse; font-size:0.88rem; text-align:left;">
+            <thead>
+              <tr style="background:#f1f5f9; border-bottom:2px solid #e2e8f0;">
+                <th style="padding:0.75rem;">Kullanıcı Adı</th>
+                <th style="padding:0.75rem;">Ad Soyad</th>
+                <th style="padding:0.75rem;">Rol</th>
+                <th style="padding:0.75rem;">Sekme Yetkileri</th>
+                <th style="padding:0.75rem;">İşlemler</th>
+              </tr>
+            </thead>
+            <tbody id="webUsersTableBody">
+              <tr><td colspan="5" style="padding:1rem; text-align:center; color:#94a3b8;">Yükleniyor...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB 3: MAIL, SMS & AUTOMATIC SENDING SETTINGS -->
+    <div id="tab-mailsms" class="tab-content">
+      
+      <div class="card" style="background: linear-gradient(135deg, #065f46, #059669); color:#ffffff; border:none; margin-bottom:1.5rem;">
+        <h2 style="font-size:1.2rem; font-weight:800; margin:0 0 0.4rem 0; color:#ffffff;">
+          📧 E-Posta, SMS & Otomatik Gönderim Yönetimi
+        </h2>
+        <p style="font-size:0.85rem; color:#a7f3d0; margin:0;">
+          ERP sisteminizde yeni bir Fatura, İrsaliye veya Sipariş oluşturulduğunda carilerinize otomatik PDF E-Posta ve NetGSM SMS gönderilmesini bu ekrandan ayarlayabilirsiniz.
+        </p>
+      </div>
+
+      <div class="grid">
+
+        <!-- CARD 1: E-POSTA (SMTP) AYARLARI -->
+        <div class="card" style="border-top: 4px solid #10b981;">
+          <div class="card-title" style="color: #059669;">
+            <i class="fa-envelope"></i> 📧 E-Posta (SMTP) Sunucu Ayarları
+          </div>
+          
+          <div class="form-group">
+            <label for="cfgMailHost">SMTP Sunucu Adresi (Host)</label>
+            <input type="text" id="cfgMailHost" class="form-control" placeholder="Örn: smtp.gmail.com veya mail.domain.com">
+          </div>
+
+          <div class="form-group">
+            <label for="cfgMailPort">SMTP Port</label>
+            <input type="number" id="cfgMailPort" class="form-control" placeholder="587 (TLS) veya 465 (SSL)" value="587">
+          </div>
+
+          <div class="form-group">
+            <label for="cfgMailUser">E-Posta / Kullanıcı Adı</label>
+            <input type="text" id="cfgMailUser" class="form-control" placeholder="Örn: bilgi@firmam.com">
+          </div>
+
+          <div class="form-group">
+            <label for="cfgMailPass">E-Posta Şifresi</label>
+            <input type="password" id="cfgMailPass" class="form-control" placeholder="••••••••">
+          </div>
+
+          <div class="form-group" style="background:#f0fdf4; padding:0.75rem; border-radius:8px; border:1px solid #bbf7d0;">
+            <label style="display:flex; align-items:center; gap:0.5rem; cursor:pointer; color:#15803d; margin:0;">
+              <input type="checkbox" id="cfgMailEnableSsl" checked style="width:18px; height:18px;"> SSL / TLS Güvenli Bağlantı Kullan
+            </label>
+          </div>
+
+          <div class="form-group" style="background:#eff6ff; padding:0.75rem; border-radius:8px; border:1px solid #bfdbfe; margin-top:0.75rem;">
+            <label style="display:flex; align-items:center; gap:0.5rem; cursor:pointer; color:#1d4ed8; margin:0;">
+              <input type="checkbox" id="cfgMailAutoSend" style="width:18px; height:18px;"> ⚡ Otomatik E-Posta Gönderimi AKTİF
+            </label>
+          </div>
+
+          <div style="text-align:right; margin-top:1rem;">
+            <button class="btn btn-secondary" onclick="testMailConnection()">
+              <i class="fa-paper-plane"></i> Test Maili Gönder
+            </button>
+          </div>
+        </div>
+
+        <!-- CARD 2: SMS (NETGSM) ENTEGRASYON AYARLARI -->
+        <div class="card" style="border-top: 4px solid #2563eb;">
+          <div class="card-title" style="color: #1d4ed8;">
+            <i class="fa-comment-sms"></i> 📱 NetGSM SMS Entegrasyon Ayarları
+          </div>
+
+          <div class="form-group">
+            <label for="cfgSmsUser">NetGSM Kullanıcı Adı (Müşteri Kodu / GSM)</label>
+            <input type="text" id="cfgSmsUser" class="form-control" placeholder="Örn: 850XXXXXXX">
+          </div>
+
+          <div class="form-group">
+            <label for="cfgSmsPass">NetGSM Şifre</label>
+            <input type="password" id="cfgSmsPass" class="form-control" placeholder="••••••••">
+          </div>
+
+          <div class="form-group">
+            <label for="cfgSmsHeader">SMS Gönderici Başlığı (Header / Orjinatör)</label>
+            <input type="text" id="cfgSmsHeader" class="form-control" placeholder="Örn: FIRMA_ADI">
+          </div>
+
+          <div class="form-group" style="background:#eff6ff; padding:0.75rem; border-radius:8px; border:1px solid #bfdbfe; margin-top:1rem;">
+            <label style="display:flex; align-items:center; gap:0.5rem; cursor:pointer; color:#1d4ed8; margin:0;">
+              <input type="checkbox" id="cfgSmsAutoSend" style="width:18px; height:18px;"> ⚡ Otomatik SMS Gönderimi AKTİF
+            </label>
+          </div>
+
+          <div style="text-align:right; margin-top:1.5rem;">
+            <button class="btn btn-secondary" onclick="testSmsConnection()">
+              <i class="fa-comment-sms"></i> Test SMS'i Gönder
+            </button>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- CARD 3: OTOMATİK GÖNDERİM ZAMANLAMA & BAŞLANGIÇ AYARLARI -->
+      <div class="card" style="border-top: 4px solid #f59e0b; background: #fffbeb;">
+        <div class="card-title" style="color: #b45309;">
+          <i class="fa-clock"></i> ⏰ Otomatik Gönderim Zamanlama & Başlangıç Ayarları
+        </div>
+        <p style="font-size:0.85rem; color:#78350f; margin-bottom:1rem;">
+          Sistemin geçmişe dönük belgeleri tekrar göndermemesi için başlangıç tarihini ve tarama sıklığını ayarlayınız.
+        </p>
+
+        <div class="grid-2">
+          <div class="form-group">
+            <label for="cfgAutoSendStartDate" style="color:#b45309;">
+              <i class="fa-calendar-day"></i> Hangi Tarih & Saatten İtibaren Gönderilsin?
+            </label>
+            <input type="datetime-local" id="cfgAutoSendStartDate" class="form-control" style="font-weight:700;">
+          </div>
+
+          <div class="form-group">
+            <label for="cfgAutoSendIntervalMinutes" style="color:#b45309;">
+              <i class="fa-arrows-rotate"></i> Otomatik Tarama & Gönderim Sıklığı
+            </label>
+            <select id="cfgAutoSendIntervalMinutes" class="form-control" style="font-weight:700;">
+              <option value="5">Her 5 Dakikada Bir</option>
+              <option value="10">Her 10 Dakikada Bir</option>
+              <option value="15" selected>Her 15 Dakikada Bir (Önerilen)</option>
+              <option value="30">Her 30 Dakikada Bir</option>
+              <option value="60">Saatte Bir (60 Dakika)</option>
+            </select>
+          </div>
+        </div>
+
+        <div style="background:#ffffff; padding:1rem; border-radius:8px; border:1px solid #fde68a; margin-top:0.5rem;">
+          <label style="font-weight:700; color:#92400e; display:block; margin-bottom:0.5rem;">
+            Otomatik Gönderilecek Belge Türleri Seçimi:
+          </label>
+          <div style="display:flex; gap:1.5rem; flex-wrap:wrap;">
+            <label style="display:flex; align-items:center; gap:0.4rem; cursor:pointer; font-weight:600;">
+              <input type="checkbox" id="cfgAutoSendFaturalar" checked style="width:18px; height:18px;"> 🧾 Satış Faturaları
+            </label>
+            <label style="display:flex; align-items:center; gap:0.4rem; cursor:pointer; font-weight:600;">
+              <input type="checkbox" id="cfgAutoSendIrsaliyeler" checked style="width:18px; height:18px;"> 🚚 Satış İrsaliyeleri
+            </label>
+            <label style="display:flex; align-items:center; gap:0.4rem; cursor:pointer; font-weight:600;">
+              <input type="checkbox" id="cfgAutoSendSiparisler" style="width:18px; height:18px;"> 🛒 Satış Siparişleri
+            </label>
+          </div>
+        </div>
+      </div>
+
+      <!-- SAVE BUTTON -->
+      <div class="card" style="text-align:right; background:#f0fdf4; border:1px solid #bbf7d0;">
+        <button class="btn btn-success" onclick="saveMailSmsSettings()" style="padding:0.8rem 2.5rem; font-size:1.05rem;">
+          <i class="fa-save"></i> Tüm Mail, SMS & Otomatik Gönderim Ayarlarını Kaydet
+        </button>
+        <div id="mailSmsAlert" class="alert" style="display:none; text-align:left;"></div>
+      </div>
+
+    </div>
+
+    <!-- TAB 4: XSLT TASARIMLARI (e-İrsaliye, e-Fatura, e-Arşiv) -->
+    <div id="tab-xslt" class="tab-content">
+      
+      <!-- e-İrsaliye XSLT Card -->
+      <div class="card" style="border-top: 4px solid #0284c7; margin-bottom:1.5rem;">
+        <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:1rem; margin-bottom:0.75rem;">
+          <div class="card-title" style="color:#0284c7; margin:0;">
+            <i class="fa-file-code"></i> 🚚 e-İrsaliye XSLT Tasarımı
+          </div>
+          <div>
+            <input type="file" id="fileXsltIrsaliye" accept=".xslt,.xml" style="display:none;" onchange="loadXsltFromFile(this, 'xsltCodeEditorMain')">
+            <button class="btn btn-secondary" onclick="document.getElementById('fileXsltIrsaliye').click()">
+              <i class="fa-folder-open"></i> Bilgisayardan XSLT Seç / Ekle (.xslt)
+            </button>
+          </div>
+        </div>
+        <p style="font-size:0.85rem; color:#64748b; margin-bottom:0.75rem;">GİB e-İrsaliye PDF/HTML çıktısında kullanılacak XSLT şablonunu düzenleyebilir veya bilgisayarınızdan `.xslt` dosyası yükleyebilirsiniz.</p>
+        <div class="form-group">
+          <label for="xsltCodeEditorMain">Mevcut e-İrsaliye XSLT Kodu</label>
+          <textarea id="xsltCodeEditorMain" class="form-control" rows="12" style="font-family:monospace; font-size:0.82rem; background:#0f172a; color:#38bdf8;"></textarea>
+        </div>
+        <div style="text-align:right;">
+          <button class="btn btn-success" onclick="saveXsltToServer('irsaliye', 'xsltCodeEditorMain')"><i class="fa-save"></i> Kaydet & Uygula</button>
+        </div>
+      </div>
+
+      <!-- e-Fatura XSLT Card -->
+      <div class="card" style="border-top: 4px solid #16a34a; margin-bottom:1.5rem;">
+        <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:1rem; margin-bottom:0.75rem;">
+          <div class="card-title" style="color:#16a34a; margin:0;">
+            <i class="fa-file-invoice"></i> 🧾 e-Fatura XSLT Tasarımı
+          </div>
+          <div>
+            <input type="file" id="fileXsltFatura" accept=".xslt,.xml" style="display:none;" onchange="loadXsltFromFile(this, 'xsltEFaturaEditor')">
+            <button class="btn btn-secondary" onclick="document.getElementById('fileXsltFatura').click()">
+              <i class="fa-folder-open"></i> Bilgisayardan XSLT Seç / Ekle (.xslt)
+            </button>
+          </div>
+        </div>
+        <p style="font-size:0.85rem; color:#64748b; margin-bottom:0.75rem;">GİB e-Fatura (TEMEL / TİCARİ) PDF/HTML çıktısında kullanılacak XSLT şablonunu düzenleyebilirsiniz.</p>
+        <div class="form-group">
+          <label for="xsltEFaturaEditor">Mevcut e-Fatura XSLT Kodu</label>
+          <textarea id="xsltEFaturaEditor" class="form-control" rows="12" style="font-family:monospace; font-size:0.82rem; background:#0f172a; color:#4ade80;"></textarea>
+        </div>
+        <div style="text-align:right;">
+          <button class="btn btn-success" onclick="saveXsltToServer('fatura', 'xsltEFaturaEditor')"><i class="fa-save"></i> Kaydet & Uygula</button>
+        </div>
+      </div>
+
+      <!-- e-Arşiv XSLT Card -->
+      <div class="card" style="border-top: 4px solid #d97706;">
+        <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:1rem; margin-bottom:0.75rem;">
+          <div class="card-title" style="color:#d97706; margin:0;">
+            <i class="fa-archive"></i> 📦 e-Arşiv Fatura XSLT Tasarımı
+          </div>
+          <div>
+            <input type="file" id="fileXsltArsiv" accept=".xslt,.xml" style="display:none;" onchange="loadXsltFromFile(this, 'xsltEArsivEditor')">
+            <button class="btn btn-secondary" onclick="document.getElementById('fileXsltArsiv').click()">
+              <i class="fa-folder-open"></i> Bilgisayardan XSLT Seç / Ekle (.xslt)
+            </button>
+          </div>
+        </div>
+        <p style="font-size:0.85rem; color:#64748b; margin-bottom:0.75rem;">GİB e-Arşiv Fatura PDF/HTML çıktısında kullanılacak XSLT şablonunu düzenleyebilirsiniz.</p>
+        <div class="form-group">
+          <label for="xsltEArsivEditor">Mevcut e-Arşiv XSLT Kodu</label>
+          <textarea id="xsltEArsivEditor" class="form-control" rows="12" style="font-family:monospace; font-size:0.82rem; background:#0f172a; color:#fbbf24;"></textarea>
+        </div>
+        <div style="text-align:right;">
+          <button class="btn btn-warning" onclick="saveXsltToServer('arsiv', 'xsltEArsivEditor')"><i class="fa-save"></i> Kaydet & Uygula</button>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- TAB 5: ADMIN AYARLARI & SİSTEM TESTİ -->
+    <div id="tab-settings" class="tab-content">
+      
+      <!-- SQL SERVER DB -->
+      <div class="card">
+        <div class="card-title">
+          <i class="fa-database" style="color:#2563eb;"></i> 🔌 SQL Server Veritabanı Bağlantı Ayarları
+        </div>
+        <div class="grid-2">
+          <div class="form-group">
+            <label for="cfgServer">Sunucu Adı / IP</label>
+            <input type="text" id="cfgServer" class="form-control" placeholder="Örn: LOGOSRV veya 192.168.1.100">
+          </div>
+          <div class="form-group">
+            <label for="cfgDatabase">Veritabanı Adı</label>
+            <input type="text" id="cfgDatabase" class="form-control" placeholder="Örn: LKSDB111 veya TIGERDB">
+          </div>
+          <div class="form-group">
+            <label for="cfgUserId">SQL Kullanıcı Adı</label>
+            <input type="text" id="cfgUserId" class="form-control" placeholder="Örn: sa">
+          </div>
+          <div class="form-group">
+            <label for="cfgPassword">SQL Şifresi</label>
+            <input type="password" id="cfgPassword" class="form-control" placeholder="••••••••">
+          </div>
+        </div>
+        <div style="text-align:right;">
+          <button class="btn btn-secondary" onclick="testDbConnection()"><i class="fa-network-wired"></i> Veritabanı Bağlantısını Test Et</button>
+        </div>
+        <div id="testDbResult" class="alert" style="display:none;"></div>
+      </div>
+
+      <!-- TELEGRAM BOT TOKEN -->
+      <div class="card">
+        <div class="card-title">
+          <i class="fa-paper-plane" style="color:#10b981;"></i> 🤖 Telegram Bot Ayarları
+        </div>
+        <div class="form-group">
+          <label for="cfgBotToken">Telegram Bot Token (BotFather'dan Alınan)</label>
+          <input type="text" id="cfgBotToken" class="form-control" placeholder="Örn: 8913181724:AAFG1wx...">
+        </div>
+        <div style="text-align:right; margin-top:0.75rem;">
+          <button class="btn btn-secondary" onclick="testTelegramBotConnection()"><i class="fa-paper-plane"></i> Telegram Bot Bağlantısını Test Et</button>
+        </div>
+        <div id="testTelegramResult" class="alert" style="display:none;"></div>
+      </div>
+
+      <!-- YAPAY ZEKA (AI) TOKEN & ASİSTAN AYARLARI -->
+      <div class="card" style="border-top: 4px solid #8b5cf6; background: linear-gradient(to bottom, #ffffff, #faf5ff);">
+        <div class="card-title" style="color:#7c3aed;">
+          <i class="fa-brain"></i> 🧠 Yapay Zeka (AI) Akıllı Asistan & Token Aktivasyonu
+        </div>
+        <p style="font-size:0.85rem; color:#6b21a8; margin-bottom:1rem;">
+          Yapay Zeka API Token'ınızı tanımlayarak Telegram'da <code>bot: ahmet carisinin 30 günlük hareketleri</code> veya <code>bot: banka hareketlerimi getir</code> şeklinde serbest Türkçe ile canlı veritabanı sorguları çalıştırabilirsiniz.
+        </p>
+
+        <div class="grid-2">
+          <div class="form-group">
+            <label for="cfgAiProvider" style="color:#6b21a8; font-weight:700;">
+              <i class="fa-server"></i> Yapay Zeka Servis Sağlayıcısı
+            </label>
+            <select id="cfgAiProvider" class="form-control" style="font-weight:700;" onchange="onAiProviderChange()">
+              <option value="Groq" selected>Groq (Llama-3.3-70b - Ücretsiz & Yüksek Hızlı)</option>
+              <option value="OpenAI">OpenAI (GPT-4o / GPT-4o-mini)</option>
+              <option value="Gemini">Google Gemini (2.0 Flash / 1.5 Flash / Pro)</option>
+              <option value="DeepSeek">DeepSeek (V3 / R1)</option>
+              <option value="Custom">Diğer / Özel LLM Servisi</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label for="cfgAiModel" style="color:#6b21a8; font-weight:700;">
+              <i class="fa-microchip"></i> Model Adı
+            </label>
+            <input type="text" id="cfgAiModel" class="form-control" placeholder="Örn: llama-3.3-70b-versatile veya gpt-4o-mini" value="llama-3.3-70b-versatile">
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="cfgAiApiKey" style="color:#6b21a8; font-weight:700;">
+            <i class="fa-key"></i> Yapay Zeka API Anahtarı / Token (ApiKey)
+          </label>
+          <div style="display:flex; gap:0.5rem;">
+            <input type="password" id="cfgAiApiKey" class="form-control" placeholder="Örn: AQ... / AIza... / gsk_... / sk-..." style="font-family:monospace;" oninput="onAiApiKeyInput()">
+            <button class="btn btn-secondary" type="button" onclick="togglePasswordVisibility('cfgAiApiKey')" title="Göster / Gizle">
+              <i class="fa-eye"></i>
+            </button>
+          </div>
+        </div>
+
+        <div class="form-group" style="background:#f3e8ff; padding:0.75rem; border-radius:8px; border:1px solid #d8b4fe; margin-top:1rem;">
+          <label style="display:flex; align-items:center; gap:0.5rem; cursor:pointer; color:#6b21a8; margin:0; font-weight:700;">
+            <input type="checkbox" id="cfgAiIsEnabled" checked style="width:18px; height:18px;"> ⚡ Yapay Zeka (AI) Doğal Dil Sorgulama Motorunu AKTİF ET
+          </label>
+        </div>
+
+        <div style="text-align:right; margin-top:1rem;">
+          <button class="btn btn-secondary" onclick="testAiTokenConnection()" style="background:#7c3aed; color:#ffffff;">
+            <i class="fa-vial"></i> Yapay Zeka (AI) Tokenini Test Et
+          </button>
+        </div>
+        <div id="testAiResult" class="alert" style="display:none;"></div>
+      </div>
+
+      <!-- ERP SYSTEM PARAMETERS -->
+      <div class="card">
+        <div class="card-title">
+          <i class="fa-building" style="color:#f59e0b;"></i> 🏢 ERP Entegrasyon Sistem Parametreleri
+        </div>
+        <div class="grid-3">
+          <div class="form-group">
+            <label for="cfgTargetSystem">Hedef Entegrasyon Sistemi</label>
+            <select id="cfgTargetSystem" class="form-control" style="font-weight:700;">
+              <option value="ERP">Logo ERP / Tiger (LG_XXX Tabloları)</option>
+              <option value="CRM">Logo CRM (MT_Proposals Tabloları)</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="cfgFirmNo">Firma No</label>
+            <input type="text" id="cfgFirmNo" class="form-control" placeholder="Örn: 001">
+          </div>
+          <div class="form-group">
+            <label for="cfgPeriodNo">Dönem No</label>
+            <input type="text" id="cfgPeriodNo" class="form-control" placeholder="Örn: 01">
+          </div>
+          <div class="form-group">
+            <label for="cfgWarehouseNo">Ambar No</label>
+            <input type="number" id="cfgWarehouseNo" class="form-control" placeholder="Örn: 0">
+          </div>
+          <div class="form-group">
+            <label for="cfgDocumentYear">Belge Yılı</label>
+            <input type="text" id="cfgDocumentYear" class="form-control" placeholder="2026">
+          </div>
+          <div class="form-group">
+            <label for="cfgInvoiceFichePrefix">Fatura Fiş Öneki</label>
+            <input type="text" id="cfgInvoiceFichePrefix" class="form-control" placeholder="FAT">
+          </div>
+          <div class="form-group">
+            <label for="cfgDispatchFichePrefix">İrsaliye Fiş Öneki</label>
+            <input type="text" id="cfgDispatchFichePrefix" class="form-control" placeholder="IRS">
+          </div>
+          <div class="form-group">
+            <label for="cfgOrderFichePrefix">Sipariş Fiş Öneki</label>
+            <input type="text" id="cfgOrderFichePrefix" class="form-control" placeholder="SIP">
+          </div>
+          <div class="form-group">
+            <label for="cfgLicenseExpirationDate">Lisans Son Kullanım Tarihi</label>
+            <input type="date" id="cfgLicenseExpirationDate" class="form-control">
+          </div>
+        </div>
+      </div>
+
+      <!-- SAVE ADMIN SETTINGS -->
+      <div class="card" style="text-align:right;">
+        <button class="btn btn-primary" onclick="saveSettings()" style="padding:0.8rem 2.5rem; font-size:1.05rem;">
+          <i class="fa-floppy-disk"></i> Tüm Admin Ayarlarını Kaydet
+        </button>
+        <div id="saveSettingsResult" class="alert" style="display:none; text-align:left;"></div>
+      </div>
+
+    </div>
+
+    <!-- TAB: AKILLI RAPORLAR & SQL YÖNETİMİ -->
+    <div id="tab-reports" class="tab-content">
+      <div class="card" style="border-top: 4px solid #7c3aed; background: linear-gradient(to bottom, #ffffff, #faf5ff);">
+        <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:1rem;">
+          <div>
+            <h3 class="card-title" style="color:#6b21a8; margin:0 0 0.4rem 0;">
+              <i class="fa-solid fa-chart-line"></i> 📊 Akıllı Raporlar, "Firmam" Kokpiti & SQL Yönetimi
+            </h3>
+            <p style="font-size:0.85rem; color:#7e22ce; margin:0;">
+              İstediğiniz SQL sorgusunu yazarak Telegram botuna ve "firmam" ekranına tek tıkla canlı raporlar ekleyin.
+            </p>
+          </div>
+          <button class="btn btn-primary" onclick="openAddReportModal()" style="background:#7c3aed; color:#fff; font-weight:700;">
+            <i class="fa-plus"></i> Yeni SQL Raporu Ekle
+          </button>
+        </div>
+
+        <!-- CATEGORY FILTER PILLS -->
+        <div style="display:flex; gap:0.4rem; flex-wrap:wrap; margin-top:1.2rem;" id="reportCategoryFilters">
+          <button class="btn btn-secondary btn-sm active" onclick="filterReportsCategory('ALL', this)" style="border-radius:20px; font-weight:700;">Tümü</button>
+          <button class="btn btn-secondary btn-sm" onclick="filterReportsCategory('Kasa', this)" style="border-radius:20px;">💰 Kasa</button>
+          <button class="btn btn-secondary btn-sm" onclick="filterReportsCategory('Banka', this)" style="border-radius:20px;">🏦 Banka</button>
+          <button class="btn btn-secondary btn-sm" onclick="filterReportsCategory('CekSenet', this)" style="border-radius:20px;">📑 Çek/Senet</button>
+          <button class="btn btn-secondary btn-sm" onclick="filterReportsCategory('Fatura', this)" style="border-radius:20px;">📈 Satış/Alış Fatura</button>
+          <button class="btn btn-secondary btn-sm" onclick="filterReportsCategory('Irsaliye', this)" style="border-radius:20px;">🚚 İrsaliye</button>
+          <button class="btn btn-secondary btn-sm" onclick="filterReportsCategory('Siparis', this)" style="border-radius:20px;">📋 Sipariş</button>
+          <button class="btn btn-secondary btn-sm" onclick="filterReportsCategory('Mizan', this)" style="border-radius:20px;">📚 Mizan</button>
+          <button class="btn btn-secondary btn-sm" onclick="filterReportsCategory('Uretim', this)" style="border-radius:20px;">🏭 Üretim</button>
+          <button class="btn btn-secondary btn-sm" onclick="filterReportsCategory('Cari', this)" style="border-radius:20px;">👤 Cari Ekranı</button>
+          <button class="btn btn-secondary btn-sm" onclick="filterReportsCategory('Malzeme', this)" style="border-radius:20px;">📦 Malzeme Ekranı</button>
+          <button class="btn btn-secondary btn-sm" onclick="filterReportsCategory('YapayZeka', this)" style="border-radius:20px; color:#7c3aed; font-weight:700;">🤖 Yapay Zeka Belleği</button>
+        </div>
+      </div>
+
+      <!-- REPORTS LIST -->
+      <div id="reportsListContainer" class="grid" style="grid-template-columns: repeat(auto-fill, minmax(360px, 1fr)); margin-bottom:2rem;">
+        <!-- Rendered via JS -->
+      </div>
+
+      <!-- REPORT HISTORY SECTION -->
+      <div class="card" style="border-top: 4px solid #06b6d4;">
+        <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:1rem; margin-bottom:1rem;">
+          <div>
+            <h3 class="card-title" style="color:#0891b2; margin:0 0 0.25rem 0;">
+              <i class="fa-solid fa-clock-rotate-left"></i> 📜 Rapor Çalıştırma &amp; Yapay Zeka Sorgu Tarihçesi
+            </h3>
+            <p style="font-size:0.85rem; color:#64748b; margin:0;">
+              Telegram'dan ve webden çalıştırılan tüm SQL raporlarının ve AI sorgularının canlı işlem kayıtları.
+            </p>
+          </div>
+          <div style="display:flex; gap:0.5rem;">
+            <button class="btn btn-secondary btn-sm" onclick="loadMainReportHistory()">
+              <i class="fa-rotate"></i> Yenile
+            </button>
+            <button class="btn btn-secondary btn-sm" style="color:#ef4444;" onclick="clearMainReportHistory()">
+              <i class="fa-trash"></i> Geçmişi Temizle
+            </button>
+          </div>
+        </div>
+
+        <div style="overflow-x:auto;">
+          <table class="table" style="font-size:0.85rem;">
+            <thead>
+              <tr>
+                <th style="width:140px;">Tarih / Saat</th>
+                <th>Rapor / Sorgu Başlığı</th>
+                <th style="width:110px;">Kategori</th>
+                <th>Çalıştıran</th>
+                <th style="width:90px;">Süre</th>
+                <th style="width:80px;">Kayıt</th>
+                <th style="width:90px;">Durum</th>
+                <th style="width:100px;">İşlem</th>
+              </tr>
+            </thead>
+            <tbody id="mainReportHistoryTableBody">
+              <tr>
+                <td colspan="8" style="text-align:center; padding:1.5rem; color:#94a3b8;">Yükleniyor...</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <script src="js/app.js?v=2"></script>
+
+  <!-- CUSTOM REPORT ADD/EDIT MODAL -->
+  <div id="reportModal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(15,23,42,0.6); z-index:9999; align-items:center; justify-content:center; padding:1rem;">
+    <div style="background:#ffffff; border-radius:12px; width:100%; max-width:780px; padding:1.5rem; box-shadow:0 20px 25px -5px rgba(0,0,0,0.1); max-height:90vh; overflow-y:auto;">
+      <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid #e2e8f0; padding-bottom:0.75rem; margin-bottom:1rem;">
+        <h3 style="font-size:1.1rem; font-weight:800; color:#0f172a; margin:0;" id="reportModalTitle">
+          <i class="fa-solid fa-code" style="color:#7c3aed;"></i> Yeni SQL Raporu Tanımla
+        </h3>
+        <button onclick="closeReportModal()" style="background:none; border:none; font-size:1.4rem; cursor:pointer; color:#64748b;">&times;</button>
+      </div>
+
+      <input type="hidden" id="rptId">
+
+      <div class="grid-2">
+        <div class="form-group">
+          <label for="rptTitle">Rapor Başlığı</label>
+          <input type="text" id="rptTitle" class="form-control" placeholder="Örn: Günün Tahsilatları">
+        </div>
+        <div class="form-group">
+          <label for="rptCategory">Hedef Kategori / Menü</label>
+          <select id="rptCategory" class="form-control">
+            <option value="Kasa">💰 Kasa Raporları</option>
+            <option value="Banka">🏦 Banka Raporları</option>
+            <option value="CekSenet">📑 Çek / Senet Raporları</option>
+            <option value="Fatura">📈 Satış & Alış Faturaları</option>
+            <option value="Irsaliye">🚚 İrsaliye Raporları</option>
+            <option value="Siparis">📋 Sipariş & Talep Raporları</option>
+            <option value="Mizan">📚 Muhasebe & Mizan</option>
+            <option value="Uretim">🏭 Üretim & İmalat</option>
+            <option value="Cari">👤 Cari Kart Detay Menüsü</option>
+            <option value="Malzeme">📦 Malzeme Detay Menüsü</option>
+            <option value="Genel" selected>🌐 Genel Raporlar</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="grid-2">
+        <div class="form-group">
+          <label for="rptButtonText">Telegram Buton Yazısı</label>
+          <input type="text" id="rptButtonText" class="form-control" placeholder="Örn: 💰 Günlük Kasa">
+        </div>
+        <div class="form-group">
+          <label for="rptOrder">Görüntüleme Sırası</label>
+          <input type="number" id="rptOrder" class="form-control" value="1">
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label for="rptDescription">Rapor Açıklaması</label>
+        <input type="text" id="rptDescription" class="form-control" placeholder="Kısa açıklama...">
+      </div>
+
+      <div class="form-group">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.4rem;">
+          <label for="rptSqlQuery" style="margin:0; font-weight:700; color:#1e293b;">
+            T-SQL Sorgusu (Salt Okunur SELECT)
+          </label>
+          <div style="font-size:0.75rem; color:#64748b;">
+            Parametreler: <code>{firmNo}</code> <code>{periodNo}</code> <code>{clientRef}</code> <code>{itemRef}</code>
+          </div>
+        </div>
+        <textarea id="rptSqlQuery" class="form-control" rows="8" style="font-family:monospace; font-size:0.85rem; background:#0f172a; color:#38bdf8;" placeholder="SELECT TOP 10 * FROM LG_{firmNo}_CLCARD"></textarea>
+      </div>
+
+      <div style="display:flex; gap:1rem; margin-bottom:1rem; flex-wrap:wrap;">
+        <label style="display:flex; align-items:center; gap:0.4rem; cursor:pointer; font-weight:600;">
+          <input type="checkbox" id="rptShowFirmam" checked style="width:16px; height:16px;"> 'firmam' Kokpit Menüsünde Göster
+        </label>
+        <label style="display:flex; align-items:center; gap:0.4rem; cursor:pointer; font-weight:600;">
+          <input type="checkbox" id="rptIsActive" checked style="width:16px; height:16px;"> Aktif (Kullanıma Açık)
+        </label>
+      </div>
+
+      <!-- SQL TEST BUTTON & RESULT -->
+      <div style="margin-bottom:1rem;">
+        <button type="button" class="btn btn-secondary" onclick="testCustomReportSql()" style="background:#475569; color:#fff; font-size:0.85rem;">
+          <i class="fa-play"></i> SQL Sorgusunu Canlı Test Et
+        </button>
+        <div id="testSqlResultBox" style="display:none; margin-top:0.75rem; max-height:200px; overflow:auto; background:#f8fafc; border:1px solid #cbd5e1; border-radius:8px; padding:0.75rem; font-family:monospace; font-size:0.8rem;"></div>
+      </div>
+
+      <div style="display:flex; justify-content:flex-end; gap:0.75rem; border-top:1px solid #e2e8f0; padding-top:1rem;">
+        <button class="btn btn-secondary" onclick="closeReportModal()">İptal</button>
+        <button class="btn btn-primary" onclick="saveReportModal()" style="background:#7c3aed;">
+          <i class="fa-save"></i> Raporu Kaydet
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- TELEGRAM USER PERMISSIONS MODAL -->
+  <div id="telegramUserPermissionsModal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(15,23,42,0.6); z-index:9999; align-items:center; justify-content:center; padding:1rem;">
+    <div style="background:#ffffff; border-radius:12px; width:100%; max-width:680px; padding:1.5rem; box-shadow:0 20px 25px -5px rgba(0,0,0,0.1); max-height:90vh; overflow-y:auto;">
+      <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid #e2e8f0; padding-bottom:0.75rem; margin-bottom:1rem;">
+        <h3 style="font-size:1.1rem; font-weight:800; color:#0f172a; margin:0;" id="permModalTitle">
+          <i class="fa-user-gear" style="color:#2563eb;"></i> Telegram Kullanıcı Yetki & Kısıtlama Ayarları
+        </h3>
+        <button onclick="closeTelegramPermissionsModal()" style="background:none; border:none; font-size:1.4rem; cursor:pointer; color:#64748b;">&times;</button>
+      </div>
+
+      <input type="hidden" id="permChatId">
+
+      <div style="background:#f8fafc; padding:0.85rem; border-radius:8px; margin-bottom:1rem; border:1px solid #e2e8f0; display:flex; gap:1.5rem; flex-wrap:wrap;">
+        <label style="display:flex; align-items:center; gap:0.4rem; font-weight:700; color:#15803d; cursor:pointer;">
+          <input type="checkbox" id="chkPermApproved" style="width:18px; height:18px;"> ✅ Onaylı Kullanıcı (Erişim Ver)
+        </label>
+        <label style="display:flex; align-items:center; gap:0.4rem; font-weight:700; color:#b91c1c; cursor:pointer;">
+          <input type="checkbox" id="chkPermBlocked" style="width:18px; height:18px;"> 🚫 Engelli (Erişimi Kes)
+        </label>
+      </div>
+
+      <!-- KODLU YETKİ KISITLAMALARI -->
+      <div style="margin-bottom:1.2rem;">
+        <h4 style="font-size:0.9rem; font-weight:700; color:#1e293b; margin-bottom:0.6rem; border-left:3px solid #2563eb; padding-left:0.5rem;">
+          🔑 Kodlu Yetki Kısıtlamaları (Firma, Malzeme, Sipariş)
+        </h4>
+        <div class="grid-3">
+          <div class="form-group">
+            <label for="txtPermFirmCyphCode">Cari Yetki Kodu</label>
+            <input type="text" id="txtPermFirmCyphCode" class="form-control" placeholder="Tüm Cariler (Boş)">
+          </div>
+          <div class="form-group">
+            <label for="txtPermItemCyphCode">Malzeme Yetki Kodu</label>
+            <input type="text" id="txtPermItemCyphCode" class="form-control" placeholder="Tüm Stoklar (Boş)">
+          </div>
+          <div class="form-group">
+            <label for="txtPermOrderCyphCode">Sipariş Yetki Kodu</label>
+            <input type="text" id="txtPermOrderCyphCode" class="form-control" placeholder="Tüm Siparişler (Boş)">
+          </div>
+        </div>
+      </div>
+
+      <!-- GENEL ERİŞİM HAKLARI -->
+      <div style="margin-bottom:1.2rem; background:#eff6ff; padding:0.85rem; border-radius:8px; border:1px solid #bfdbfe;">
+        <h4 style="font-size:0.9rem; font-weight:700; color:#1d4ed8; margin-bottom:0.6rem;">
+          🏢 Genel Görme Yetkileri
+        </h4>
+        <div style="display:flex; flex-direction:column; gap:0.5rem;">
+          <label style="display:flex; align-items:center; gap:0.4rem; cursor:pointer; font-weight:600;">
+            <input type="checkbox" id="chkPermCanViewAllFirms" style="width:16px; height:16px;"> Tüm Cari Kartları Görebilir
+          </label>
+          <label style="display:flex; align-items:center; gap:0.4rem; cursor:pointer; font-weight:600;">
+            <input type="checkbox" id="chkPermCanViewAllItems" style="width:16px; height:16px;"> Tüm Stok Kartlarını & Fiyatlarını Görebilir
+          </label>
+          <label style="display:flex; align-items:center; gap:0.4rem; cursor:pointer; font-weight:600;">
+            <input type="checkbox" id="chkPermCanViewAllOrders" style="width:16px; height:16px;"> Tüm Siparişleri Görebilir
+          </label>
+        </div>
+      </div>
+
+      <!-- MODÜL YETKİLERİ - SATIŞ -->
+      <div style="margin-bottom:1.2rem; background:#f0fdf4; padding:0.85rem; border-radius:8px; border:1px solid #bbf7d0;">
+        <h4 style="font-size:0.9rem; font-weight:700; color:#15803d; margin-bottom:0.6rem;">
+          🛒 Satış Modülü Kullanım Yetkileri
+        </h4>
+        <div class="grid-2" style="font-size:0.85rem;">
+          <label style="display:flex; align-items:center; gap:0.4rem; cursor:pointer; font-weight:600;">
+            <input type="checkbox" id="chkPermCanCreateSalesOrder" style="width:16px; height:16px;"> Satış Siparişi Oluşturabilir
+          </label>
+          <label style="display:flex; align-items:center; gap:0.4rem; cursor:pointer; font-weight:600;">
+            <input type="checkbox" id="chkPermCanViewSalesOrders" style="width:16px; height:16px;"> Satış Siparişlerini Görebilir
+          </label>
+          <label style="display:flex; align-items:center; gap:0.4rem; cursor:pointer; font-weight:600;">
+            <input type="checkbox" id="chkPermCanCreateDispatch" style="width:16px; height:16px;"> Satış İrsaliyesi Oluşturabilir
+          </label>
+          <label style="display:flex; align-items:center; gap:0.4rem; cursor:pointer; font-weight:600;">
+            <input type="checkbox" id="chkPermCanViewSalesDispatches" style="width:16px; height:16px;"> Satış İrsaliyelerini Görebilir
+          </label>
+          <label style="display:flex; align-items:center; gap:0.4rem; cursor:pointer; font-weight:600;">
+            <input type="checkbox" id="chkPermCanCreateSalesInvoice" style="width:16px; height:16px;"> Satış Faturası Oluşturabilir
+          </label>
+          <label style="display:flex; align-items:center; gap:0.4rem; cursor:pointer; font-weight:600;">
+            <input type="checkbox" id="chkPermCanViewSalesInvoices" style="width:16px; height:16px;"> Satış Faturalarını Görebilir
+          </label>
+        </div>
+      </div>
+
+      <!-- MODÜL YETKİLERİ - SATINALMA VE GİB -->
+      <div style="margin-bottom:1.2rem; background:#fffbeb; padding:0.85rem; border-radius:8px; border:1px solid #fde68a;">
+        <h4 style="font-size:0.9rem; font-weight:700; color:#b45309; margin-bottom:0.6rem;">
+          🛍️ Satınalma & GİB e-Belge Yetkileri
+        </h4>
+        <div class="grid-2" style="font-size:0.85rem;">
+          <label style="display:flex; align-items:center; gap:0.4rem; cursor:pointer; font-weight:600;">
+            <input type="checkbox" id="chkPermCanViewPurchaseOrders" style="width:16px; height:16px;"> Satınalma Siparişlerini Görebilir
+          </label>
+          <label style="display:flex; align-items:center; gap:0.4rem; cursor:pointer; font-weight:600;">
+            <input type="checkbox" id="chkPermCanViewPurchaseDispatches" style="width:16px; height:16px;"> Satınalma İrsaliyelerini Görebilir
+          </label>
+          <label style="display:flex; align-items:center; gap:0.4rem; cursor:pointer; font-weight:600;">
+            <input type="checkbox" id="chkPermCanViewPurchaseInvoices" style="width:16px; height:16px;"> Satınalma Faturalarını Görebilir
+          </label>
+          <label style="display:flex; align-items:center; gap:0.4rem; cursor:pointer; font-weight:700; color:#0284c7;">
+            <input type="checkbox" id="chkPermCanSendEBelge" style="width:16px; height:16px;"> 📄 GİB e-Fatura / e-İrsaliye Gönderebilir
+          </label>
+          <label style="display:flex; align-items:center; gap:0.4rem; cursor:pointer; font-weight:700; color:#0d9488;">
+            <input type="checkbox" id="chkPermCanCreateCollection" style="width:16px; height:16px;"> 💳 Tahsilat Fişi Kesebilir
+          </label>
+          <label style="display:flex; align-items:center; gap:0.4rem; cursor:pointer; font-weight:700; color:#6366f1;">
+            <input type="checkbox" id="chkPermCanViewSalesmanTarget" style="width:16px; height:16px;"> 📊 Plasiyer Ciro & Hedef Görebilir
+          </label>
+          <label style="display:flex; align-items:center; gap:0.4rem; cursor:pointer; font-weight:700; color:#e11d48;">
+            <input type="checkbox" id="chkPermCanSendSms" style="width:16px; height:16px;"> 📱 SMS Gönderebilir
+          </label>
+          <label style="display:flex; align-items:center; gap:0.4rem; cursor:pointer; font-weight:700; color:#d97706;">
+            <input type="checkbox" id="chkPermCanSendEmail" style="width:16px; height:16px;"> 📧 E-Posta / Mail Gönderebilir
+          </label>
+        </div>
+      </div>
+
+      <div style="display:flex; justify-content:flex-end; gap:0.75rem; border-top:1px solid #e2e8f0; padding-top:1rem;">
+        <button class="btn btn-secondary" onclick="closeTelegramPermissionsModal()">İptal</button>
+        <button class="btn btn-primary" onclick="saveTelegramPermissionsModal()"><i class="fa-save"></i> Yetkileri Kaydet</button>
+      </div>
+
+    </div>
+  </div>
+
+</body>
+</html>

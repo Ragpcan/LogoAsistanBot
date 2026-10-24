@@ -1,0 +1,563 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Debisoft Mail ve Sms servisi</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="viewer-styles.css">
+    <style>
+        @media print {
+            .sidebar, .main-header, .search-section, .list-view, .no-print, .info-banner { display: none !important; }
+            .content, .preview-view, body { margin: 0 !important; padding: 0 !important; background: white !important; }
+            #previewIframe { width: 100% !important; border: none !important; }
+        }
+    </style>
+</head>
+<body>
+    <div id="app">
+        <!-- SIDEBAR -->
+        <nav class="sidebar">
+            <div class="logo-container" id="logoTrigger">
+                <i class="fa-solid fa-shield-halved logo-icon"></i>
+                <div class="logo-text">Debisoft Mail ve Sms servisi</div>
+            </div>
+            <ul class="nav-links">
+                <li class="nav-item active" data-type="fatura">
+                    <i class="fa-solid fa-file-invoice"></i><span>e-Fatura</span>
+                </li>
+                <li class="nav-item" data-type="arsiv">
+                    <i class="fa-solid fa-box-archive"></i><span>e-Arşiv</span>
+                </li>
+                <li class="nav-item" data-type="irsaliye">
+                    <i class="fa-solid fa-truck-fast"></i><span>e-İrsaliye</span>
+                </li>
+                <li class="nav-item" data-type="siparis">
+                    <i class="fa-solid fa-cart-shopping"></i><span>Siparişler</span>
+                </li>
+                <li class="nav-item" data-type="talep">
+                    <i class="fa-solid fa-clipboard-list"></i><span>Talepler</span>
+                </li>
+                <li class="nav-item" data-type="automail" id="navAutoMail" style="border-left: 3px solid #f59e0b;">
+                    <i class="fa-solid fa-robot" style="color: #f59e0b;"></i><span>Oto-Gönderim</span>
+                </li>
+                <li class="nav-item" data-type="manual" id="navManual">
+                    <i class="fa-solid fa-file-code"></i><span>Dosyadan Aç</span>
+                </li>
+            </ul>
+            <div class="sidebar-footer">
+                <div class="status-indicator">
+                    <div class="status-badge" id="connStatus">
+                        <span class="dot"></span> <span>Backend: Bağlı</span>
+                    </div>
+                    <div class="firm-badge" id="activeFirmDisplay">
+                        <i class="fa-solid fa-building"></i> <span>Firma: ---</span>
+                    </div>
+                </div>
+                <button id="btnSettingsOpen" class="btn-settings-trigger">
+                    <i class="fa-solid fa-gear"></i> Ayarlar
+                </button>
+                <div style="margin-top:10px; opacity:0.3; font-size:0.6rem;">DEBISOFT PREMIUM v2.2</div>
+            </div>
+        </nav>
+
+        <!-- MAIN CONTENT -->
+        <main class="content">
+            <!-- TOP BAR: Date Filter + Actions -->
+            <header class="header" id="listHeader">
+                <div style="display:flex; align-items:center; gap:15px; flex-wrap:wrap; width:100%;">
+                    <h1 id="pageTitle" style="margin:0; flex-shrink:0;">e-Fatura</h1>
+                    <div style="display:flex; gap:10px; align-items:center; flex-grow:1; flex-wrap:wrap;">
+                        <div class="date-filter-group">
+                            <label>Başlangıç</label>
+                            <input type="date" id="dateFrom" class="date-input">
+                        </div>
+                        <div class="date-filter-group">
+                            <label>Bitiş</label>
+                            <input type="date" id="dateTo" class="date-input">
+                        </div>
+                        <input type="text" id="searchFilter" class="search-inline" placeholder="Cari / Belge No ara...">
+                        <button id="btnList" class="btn-list"><i class="fa-solid fa-list"></i> Listele</button>
+                    </div>
+                    <button id="btnClosePreview" class="btn-icon hidden" title="Listeye Dön" onclick="closePreview()">
+                        <i class="fa-solid fa-arrow-left"></i>
+                    </button>
+                </div>
+            </header>
+
+            <!-- MANUAL MODE HEADER (Dosyadan Aç) -->
+            <header class="header hidden" id="manualHeader">
+                <h1 style="margin:0;">MANUEL</h1>
+                <div style="flex-grow:1;"></div>
+                <button class="btn-icon" onclick="window.print()" title="Yazdır"><i class="fa-solid fa-print"></i></button>
+            </header>
+
+            <section class="viewer-container">
+
+                <!-- DOCUMENT LIST VIEW -->
+                <div id="listView">
+                    <!-- DASHBOARD STATS -->
+                    <div id="dashboardStats" class="dashboard-grid hidden">
+                        <div class="stat-card glass-card">
+                            <i class="fa-solid fa-money-bill-wave"></i>
+                            <div class="stat-info">
+                                <label>Toplam Brüt</label>
+                                <span id="statBrut">0.00</span>
+                            </div>
+                        </div>
+                        <div class="stat-card glass-card">
+                            <i class="fa-solid fa-percent"></i>
+                            <div class="stat-info">
+                                <label>Toplam KDV</label>
+                                <span id="statKdv">0.00</span>
+                            </div>
+                        </div>
+                        <div class="stat-card glass-card accent">
+                            <i class="fa-solid fa-wallet"></i>
+                            <div class="stat-info">
+                                <label>Toplam Net</label>
+                                <span id="statNet">0.00</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div id="listEmptyState" class="glass-card" style="padding:60px; text-align:center; color:var(--text-dim);">
+                        <i class="fa-solid fa-calendar-days" style="font-size:3rem; color:var(--accent-light); opacity:0.3; margin-bottom:1.5rem; display:block;"></i>
+                        <h2 style="color:white; font-weight:400;">Tarih Seçin ve Listeleyin</h2>
+                        <p>Başlangıç ve bitiş tarihi seçip "Listele" butonuna basın.</p>
+                        <div class="quick-dates" style="margin-top:20px; display:flex; gap:10px; justify-content:center;">
+                            <button class="btn-chip" onclick="setQuickDate('today')">Bugün</button>
+                            <button class="btn-chip" onclick="setQuickDate('yesterday')">Dün</button>
+                            <button class="btn-chip" onclick="setQuickDate('thisMonth')">Bu Ay</button>
+                            <button class="btn-chip" onclick="setQuickDate('lastMonth')">Geçen Ay</button>
+                        </div>
+                    </div>
+                    <div id="listTableWrap" class="hidden">
+                        <div class="list-toolbar">
+                            <span id="listCount" style="font-size:0.8rem; color:var(--text-dim);"></span>
+                            <div class="quick-dates">
+                                <button class="btn-chip" onclick="setQuickDate('today')">Bugün</button>
+                                <button class="btn-chip" onclick="setQuickDate('thisMonth')">Bu Ay</button>
+                            </div>
+                        </div>
+                        
+                        <!-- NEW: BULK ACTION TOOLBAR -->
+                        <div id="bulkToolbar" class="glass-card bulk-toolbar hidden" style="margin-bottom:15px; padding:12px 20px; display:flex; align-items:center; justify-content:space-between; border:1px solid var(--accent-light);">
+                            <div style="display:flex; align-items:center; gap:15px;">
+                                <span id="selectionText" style="font-weight:600; color:var(--accent-light);">0 belge seçildi</span>
+                                <div style="width:1px; height:20px; background:var(--glass-border);"></div>
+                                <button onclick="sendBulkSms()" class="btn-chip" style="background:rgba(230,126,34,0.15); color:#e67e22; border:1px solid #e67e22;"><i class="fa-solid fa-comment-sms"></i> Toplu SMS Gönder</button>
+                                <button onclick="sendBulkEmail()" class="btn-chip" style="background:rgba(52,152,219,0.15); color:#3498db; border:1px solid #3498db;"><i class="fa-solid fa-envelope"></i> Toplu Mail Gönder</button>
+                            </div>
+                            <button onclick="clearSelection()" class="btn-chip"><i class="fa-solid fa-xmark"></i> Seçimi Kaldır</button>
+                        </div>
+
+                        <div class="glass-card" style="overflow:hidden;">
+                            <table class="doc-table" id="docTable">
+                                <thead>
+                                    <tr>
+                                        <th style="width:40px; text-align:center;"><input type="checkbox" id="selectAll" onclick="toggleSelectAll(this)"></th>
+                                        <th>Belge No</th>
+                                        <th>Tarih</th>
+                                        <th>Cari Ünvan</th>
+                                        <th>VKN/TCKN</th>
+                                        <th style="text-align:right;">Net Tutar</th>
+                                        <th style="text-align:right;">KDV</th>
+                                        <th style="text-align:center; width:120px;">İşlem</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="docTableBody"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- PREVIEW VIEW (hidden by default) -->
+                <div id="previewView" class="hidden">
+                    <div class="preview-header glass-card">
+                        <div class="doc-info">
+                            <span id="docNo">---</span>
+                            <span id="docDate">--.--.----</span>
+                            <span id="docType" class="type-badge">e-FATURA</span>
+                        </div>
+                        <div class="action-buttons">
+                            <button class="btn-icon" title="SMS Gönder" id="btnSendSms" style="background:rgba(230,126,34,0.1);border-color:rgba(230,126,34,0.3);"><i class="fa-solid fa-comment-sms" style="color:#e67e22;"></i></button>
+                            <button class="btn-icon" title="E-Posta Gönder" id="btnSendEmail" style="background:rgba(52,152,219,0.1);border-color:rgba(52,152,219,0.3);"><i class="fa-solid fa-envelope" style="color:#3498db;"></i></button>
+                            <button class="btn-icon" title="PDF / Yazdır" onclick="printPreview()" style="background:rgba(16,185,129,0.1);border-color:rgba(16,185,129,0.3);"><i class="fa-solid fa-file-pdf" style="color:#10b981;"></i></button>
+                            <button class="btn-icon" title="Listeye Dön" onclick="closePreview()"><i class="fa-solid fa-arrow-left"></i></button>
+                        </div>
+                    </div>
+                    <div id="htmlContent" style="position:relative;"></div>
+                    <iframe id="previewIframe" class="preview-iframe" style="width:100%;border:none;border-radius:16px;min-height:600px;background:white;"></iframe>
+                </div>
+
+                <!-- MANUAL (Dosyadan Aç) VIEW -->
+                <div id="manualView" class="hidden">
+                    <!-- ... existing manual view content ... -->
+                    <div class="glass-card" style="padding:25px; display:flex; flex-direction:column; gap:20px;">
+                        <div style="display:flex; gap:20px; align-items:flex-end; flex-wrap:wrap;">
+                            <div style="flex:1; min-width:220px;">
+                                <label class="field-label">1. XML DOSYASI SEÇİN</label>
+                                <input type="file" id="xmlFileInput" accept=".xml" class="file-input">
+                            </div>
+                            <div style="flex:1; min-width:260px;">
+                                <label class="field-label">2. XSLT TASARIMI SEÇİN</label>
+                                <div style="display:flex; gap:10px;">
+                                    <select id="manualXsltSelect" class="styled-select">
+                                        <option value="">— Dosyadan Seç —</option>
+                                    </select>
+                                    <label class="btn-browse" title="Bilgisayardan XSLT dosyası seç">
+                                        <i class="fa-solid fa-folder-open"></i>
+                                        <input type="file" id="xsltFileInput" accept=".xslt,.xsl" style="display:none;">
+                                    </label>
+                                </div>
+                                <span id="manualXsltFileName" style="display:none; font-size:0.7rem; color:var(--accent-light); margin-top:4px; display:block;"></span>
+                            </div>
+                            <button id="btnRenderManual" class="btn-primary" style="height:46px; padding:0 28px; white-space:nowrap; flex-shrink:0;">
+                                <i class="fa-solid fa-wand-magic-sparkles" style="margin-right:8px;"></i>GÖRÜNTÜLE
+                            </button>
+                        </div>
+                    </div>
+                    <div id="manualHtmlContent" class="glass-card preview-frame" style="margin-top:20px; min-height:300px;"></div>
+                </div>
+
+                <!-- AUTOMATIC MAIL VIEW -->
+                <div id="autoMailView" class="hidden">
+                    <div class="glass-box" style="padding: 30px; max-width: 800px; margin: 0 auto;">
+                        <div style="display:flex; align-items:center; gap:15px; margin-bottom:20px;">
+                            <div style="width:50px; height:50px; background:#fef3c7; color:#f59e0b; border-radius:12px; display:flex; align-items:center; justify-content:center; font-size:1.5rem;">
+                                <i class="fa-solid fa-robot"></i>
+                            </div>
+                            <div>
+                                <h2 style="margin:0; font-size:1.3rem;">Otomatik Bildirim Sistemi</h2>
+                                <p style="margin:0; font-size:0.85rem; color:var(--text-dim);">Dönem içindeki yeni belgeleri tarar ve otomatik mail gönderir.</p>
+                            </div>
+                        </div>
+
+                        <div style="background:rgba(255,255,255,0.03); border:1px solid var(--glass-border); border-radius:12px; padding:20px; margin-bottom:15px; display:flex; gap:20px; align-items:center;">
+                            <div style="flex:1;">
+                                <label class="field-label" style="margin-bottom:8px; display:block;">Otomatik Robot Durumu</label>
+                                <label class="switch-label" style="display:flex; align-items:center; gap:10px; cursor:pointer; font-weight:600;">
+                                    <input type="checkbox" id="autoMailEnabled"> <span>Arka Planda Otomatik Gönderimi Etkinleştir</span>
+                                </label>
+                            </div>
+                            <div style="flex:1;">
+                                <label class="field-label" style="margin-bottom:8px; display:block;">Robot Başlangıç Tarihi</label>
+                                <input type="date" id="autoMailStartDate" class="date-input" style="width:100%; height:42px;">
+                            </div>
+                        </div>
+
+                        <div style="background:rgba(255,255,255,0.03); border:1px solid var(--glass-border); border-radius:12px; padding:20px; margin-bottom:25px;">
+                            <h3 style="margin-top:0; font-size:1rem; margin-bottom:15px;"><i class="fa-solid fa-sliders"></i> Gönderilecek Belge Türleri</h3>
+                            <div style="display:grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap:12px;" id="autoMailTypeCards">
+                                <label class="check-card" style="display:flex; align-items:center; gap:10px; cursor:pointer;"><input type="checkbox" value="fatura" class="auto-mail-type-check"> <span>e-Fatura</span></label>
+                                <label class="check-card" style="display:flex; align-items:center; gap:10px; cursor:pointer;"><input type="checkbox" value="arsiv" class="auto-mail-type-check"> <span>e-Arşiv</span></label>
+                                <label class="check-card" style="display:flex; align-items:center; gap:10px; cursor:pointer;"><input type="checkbox" value="irsaliye" class="auto-mail-type-check"> <span>e-İrsaliye</span></label>
+                                <label class="check-card" style="display:flex; align-items:center; gap:10px; cursor:pointer;"><input type="checkbox" value="siparis" class="auto-mail-type-check"> <span>Siparişler</span></label>
+                                <label class="check-card" style="display:flex; align-items:center; gap:10px; cursor:pointer;"><input type="checkbox" value="talep" class="auto-mail-type-check"> <span>Talepler</span></label>
+                            </div>
+                        </div>
+
+                        <div style="display:flex; gap:15px; align-items:flex-start;">
+                            <button id="btnStartAutoMail" class="btn-primary" style="flex:1; height:60px; font-size:1.1rem; background:linear-gradient(135deg, #f59e0b, #d97706); border:none;">
+                                <i class="fa-solid fa-play"></i> TARAMAYI VE GÖNDERİMİ BAŞLAT
+                            </button>
+                            <button id="btnSaveAutoMail" class="btn-secondary" style="padding: 18px 25px;">
+                                <i class="fa-solid fa-floppy-disk"></i> Ayarları Kaydet
+                            </button>
+                        </div>
+
+                        <div id="autoMailLog" style="margin-top:30px; background:#0f172a; border-radius:12px; padding:20px; font-family:monospace; font-size:0.82rem; height:250px; overflow-y:auto; border:1px solid #1e293b; color:#94a3b8;">
+                            <div style="color:#64748b;">> Sistem hazır. Lütfen belge türlerini seçip başlatın.</div>
+                        </div>
+                    </div>
+                </div>
+
+            </section>
+        </main>
+    </div>
+
+    <!-- LOGIN MODAL -->
+    <div class="modal-overlay" id="loginModal">
+        <div class="modal-box" style="width:360px;">
+            <h3 style="margin:0 0 20px; text-align:center;"><i class="fa-solid fa-lock" style="color:var(--accent-light);"></i> Yönetici Girişi</h3>
+            <div class="form-group"><label>Şifre</label>
+                <input type="password" id="adminPass" class="styled-input" placeholder="••••••" autocomplete="off">
+            </div>
+            <div style="display:flex; gap:10px; margin-top:20px;">
+                <button id="btnLogin" class="btn-primary" style="flex:1;">Giriş</button>
+                <button onclick="document.getElementById('loginModal').classList.remove('show')" class="btn-secondary" style="flex:1;">İptal</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- SETTINGS MODAL -->
+    <div class="modal-overlay" id="settingsModal">
+        <div class="modal-box" style="width:750px; max-height:90vh; overflow-y:auto;">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:25px;">
+                <h3 style="margin:0; display:flex; align-items:center; gap:12px;">
+                    <i class="fa-solid fa-gear" style="color:var(--accent-light);"></i> Uygulama Ayarları
+                </h3>
+                <button onclick="document.getElementById('settingsModal').classList.remove('show')" class="btn-icon" title="Kapat"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+
+            <!-- Settings Tabs -->
+            <div class="settings-tabs">
+                <button class="tab-btn active" onclick="switchTab('sql')"><i class="fa-solid fa-database"></i> SQL Bağlantısı</button>
+                <button class="tab-btn" onclick="switchTab('notification')"><i class="fa-solid fa-bullhorn"></i> Bildirimler</button>
+                <button class="tab-btn" onclick="switchTab('designs')"><i class="fa-solid fa-palette"></i> Tasarımlar</button>
+                <button class="tab-btn" onclick="switchTab('rules')"><i class="fa-solid fa-code"></i> Kurallar</button>
+            </div>
+
+            <!-- SQL Tab -->
+            <div id="tab-sql" class="tab-content">
+                <div style="display:grid; grid-template-columns:1fr 1fr; gap:15px; margin-bottom:20px;">
+                    <div class="form-group" style="grid-column:1/-1;">
+                        <label>SQL Server Adresi</label>
+                        <input type="text" id="sqlServer" class="styled-input" placeholder="192.168.1.1\LOGO">
+                    </div>
+                    <div class="form-group">
+                        <label>Veritabanı Adı</label>
+                        <input type="text" id="sqlDb" class="styled-input" placeholder="LOGODATA">
+                    </div>
+                    <div class="form-group">
+                        <label>Kullanıcı Adı</label>
+                        <input type="text" id="sqlUser" class="styled-input" placeholder="sa">
+                    </div>
+                    <div class="form-group">
+                        <label>Şifre</label>
+                        <input type="password" id="sqlPass" class="styled-input" placeholder="••••••">
+                    </div>
+                    <div class="form-group">
+                        <label>Firma Kodu</label>
+                        <input type="text" id="sqlFirma" class="styled-input" list="firmaList" placeholder="Örn: 919" autocomplete="off">
+                        <datalist id="firmaList"></datalist>
+                    </div>
+                    <div class="form-group">
+                        <label>Dönem Kodu</label>
+                        <input type="text" id="sqlDonem" class="styled-input" list="donemList" placeholder="Örn: 01" autocomplete="off">
+                        <datalist id="donemList"></datalist>
+                    </div>
+                    <p style="grid-column:1/-1; font-size:0.65rem; color:var(--text-dim); margin-top:-10px;">
+                        * Bağlantıyı test ettikten sonra firmalar ve dönemler otomatik listelenecektir.
+                    </p>
+                </div>
+                <button id="btnTestDb" class="btn-secondary" style="width:100%; margin-bottom:15px;">
+                    <i class="fa-solid fa-plug-circle-bolt"></i> Bağlantıyı Test Et
+                </button>
+                <div id="dbTestResult" style="font-size:0.8rem; padding:10px; border-radius:10px; display:none; margin-bottom:15px;"></div>
+                <div style="border-top:1px solid var(--glass-border); padding-top:20px; margin-top:5px;">
+                    <h4 style="color:var(--text-dim); font-size:0.8rem; margin:0 0 15px; text-transform:uppercase;">Firma Bilgisi (El ile girebilir veya SQL'den çekebilirsiniz)</h4>
+                    <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:12px;">
+                        <div class="form-group"><label>Firma Ünvanı</label><input type="text" id="compName" class="styled-input" placeholder="Ünvan"></div>
+                        <div class="form-group"><label>VKN / TCKN</label><input type="text" id="compVkn" class="styled-input" placeholder="VKN"></div>
+                        <div class="form-group"><label>Vergi Dairesi</label><input type="text" id="compTaxOffice" class="styled-input" placeholder="V.D."></div>
+                        <div class="form-group"><label>Şehir</label><input type="text" id="compCity" class="styled-input" placeholder="Şehir"></div>
+                        <div class="form-group"><label>İlçe</label><input type="text" id="compTown" class="styled-input" placeholder="İlçe"></div>
+                        <div class="form-group"><label>Adres</label><input type="text" id="compAddr" class="styled-input" placeholder="Adres"></div>
+                        <div class="form-group"><label>Telefon</label><input type="text" id="compTel" class="styled-input" placeholder="Tel"></div>
+                        <div class="form-group"><label>Faks</label><input type="text" id="compFax" class="styled-input" placeholder="Faks"></div>
+                        <div class="form-group"><label>E-Posta</label><input type="text" id="compEmail" class="styled-input" placeholder="Email"></div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Notification Tab -->
+            <div id="tab-notification" class="tab-content hidden">
+                <div style="margin-bottom:20px;">
+                    <h4 style="color:var(--accent-light); font-size:0.9rem; margin:0 0 15px; border-bottom:1px solid var(--glass-border); padding-bottom:8px;">
+                        <i class="fa-solid fa-comment-sms"></i> NetGSM Ayarları
+                    </h4>
+                    <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px;">
+                        <div class="form-group"><label>NetGSM Kullanıcı</label><input type="text" id="smsUser" class="styled-input" placeholder="NetGSM No"></div>
+                        <div class="form-group"><label>NetGSM Şifre</label><input type="password" id="smsPass" class="styled-input" placeholder="••••••"></div>
+                        <div class="form-group" style="grid-column:1/-1;"><label>Mesaj Başlığı (Header)</label><input type="text" id="smsHeader" class="styled-input" placeholder="REKOR"></div>
+                    </div>
+                </div>
+                <div>
+                    <h4 style="color:var(--accent-light); font-size:0.9rem; margin:0 0 15px; border-bottom:1px solid var(--glass-border); padding-bottom:8px; display:flex; justify-content:space-between; align-items:center;">
+                        <span><i class="fa-solid fa-envelope"></i> E-Posta Ayarları</span>
+                        <select id="emailMethod" class="styled-select" style="width:180px; padding:4px 8px; font-size:0.75rem;">
+                            <option value="smtp">Standart SMTP (Gmail/Kurumsal)</option>
+                            <option value="outlook">Masaüstü Outlook (COM)</option>
+                        </select>
+                    </h4>
+                    <div id="smtpSettingsGroup" style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:12px;">
+                        <div style="grid-column:1/4; border:1px dashed var(--accent); padding:10px; border-radius:12px; background:rgba(109,40,217,0.05); font-size:0.75rem; margin-bottom:8px; line-height:1.4;">
+                            <i class="fa-solid fa-shield-halved" style="color:var(--accent-light);"></i> <b>Güvenlik Uyarısı:</b> Gmail, Yandex veya Outlook.com üzerinden gönderim yapabilmek için hesabınızda <b>Uygulama Şifresi</b> (App Password) oluşturmanız zorunludur. Normal hesap şifreniz güvenlik nedeniyle engellenebilir.
+                        </div>
+                        <div class="form-group" style="grid-column:1/3;"><label>SMTP Sunucusu</label><input type="text" id="smtpHost" class="styled-input" placeholder="smtp.gmail.com"></div>
+                        <div class="form-group"><label>Port</label><input type="text" id="smtpPort" class="styled-input" placeholder="587"></div>
+                        <div class="form-group"><label>Kullanıcı Adı</label><input type="text" id="smtpUser" class="styled-input" placeholder="user@gmail.com"></div>
+                        <div class="form-group"><label>Şifre</label><input type="password" id="smtpPass" class="styled-input" placeholder="••••••"></div>
+                        <div class="form-group"><label>Gönderen E-Posta</label><input type="text" id="smtpFrom" class="styled-input" placeholder="noreply@firma.com"></div>
+                    </div>
+                    <div id="outlookSettingsGroup" class="hidden">
+                        <div class="form-group">
+                            <label>Aktif Outlook Hesabı</label>
+                            <div style="display:flex; gap:8px; align-items:center;">
+                                <select id="outlookAccount" class="styled-select" style="flex:1;">
+                                    <option value="">Hesaplar taranıyor...</option>
+                                </select>
+                                <button onclick="loadOutlookAccounts()" class="btn-eye" style="height:35px; width:35px; flex-shrink:0;" title="Hesapları Yenile">
+                                    <i class="fa-solid fa-rotate"></i>
+                                </button>
+                            </div>
+                            <div style="font-size:0.7rem; color:var(--text-dim); margin-top:5px;">
+                                <i class="fa-solid fa-circle-info"></i> Outlook'taki aktif mail hesaplarınız otomatik listelenir.
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Designs Tab -->
+            <div id="tab-designs" class="tab-content hidden">
+                <div class="control-row">
+                    <div class="form-group" style="flex:0 0 130px;">
+                        <label>Belge Tipi</label>
+                        <select id="xsltTypeInput" class="styled-select">
+                            <option value="fatura">🟣 e-Fatura</option>
+                            <option value="arsiv">🩷 e-Arşiv</option>
+                            <option value="irsaliye">🟢 e-İrsaliye</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Tasarım Adı</label>
+                        <input type="text" id="xsltNameInput" class="styled-input" placeholder="Novarchem Fatura">
+                    </div>
+                    <div class="form-group" style="flex:2;">
+                        <label>XSLT Dosya Yolu</label>
+                        <div style="display:flex; gap:8px;">
+                            <input type="text" id="xsltPathInput" class="styled-input" placeholder="C:\...\tasarim.xslt" style="flex:1;">
+                            <button id="btnBrowseXslt" class="btn-icon" title="Dosya Seç"><i class="fa-solid fa-folder-open"></i></button>
+                            <input type="file" id="xsltFileDialog" accept=".xslt,.xsl" style="display:none;">
+                        </div>
+                    </div>
+                    <button id="btnAddXslt" class="btn-add" title="Ekle"><i class="fa-solid fa-plus"></i></button>
+                </div>
+                <div id="xsltList" style="display:flex; flex-direction:column; gap:10px; max-height:300px; overflow-y:auto;"></div>
+            </div>
+
+            <!-- Rules Tab -->
+            <div id="tab-rules" class="tab-content hidden">
+                <p style="font-size:0.8rem; color:var(--text-dim); margin-bottom:15px;">Logo Connect benzeri kural motoru. <code style="color:var(--accent-light);">App.Doc.SetField("ALAN", değer)</code> ile XML alanlarına veri yazın.</p>
+                <div style="display:flex; gap:10px; margin-bottom:15px;">
+                    <button id="btnAddRule" class="btn-secondary" style="flex:1;"><i class="fa-solid fa-plus"></i> Yeni Kural</button>
+                </div>
+                <div id="ruleList" style="display:flex; flex-direction:column; gap:8px; margin-bottom:15px; max-height:150px; overflow-y:auto;"></div>
+                <div id="ruleEditor" class="hidden">
+                    <div class="form-group"><label>Kural Adı</label><input type="text" id="ruleNameInput" class="styled-input"></div>
+                    <div class="form-group">
+                        <label>JavaScript Kodu</label>
+                        <textarea id="ruleCodeInput" rows="6" class="code-textarea" 
+                            placeholder="// Örnek: SQL'den veri çek ve alana yaz&#10;const result = await sql.query('SELECT ...');&#10;App.Doc.SetField('RUHSAT_NO', result.recordset[0].Alan);"></textarea>
+                    </div>
+                    <button id="btnSaveRule" class="btn-secondary"><i class="fa-solid fa-floppy-disk"></i> Kuralı Kaydet</button>
+                </div>
+            </div>
+
+            <div style="display:flex; gap:15px; margin-top:25px; border-top:1px solid var(--glass-border); padding-top:20px;">
+                <button id="btnSaveSettings" class="btn-primary" style="flex:1; padding:14px;">
+                    <i class="fa-solid fa-floppy-disk"></i> Kaydet
+                </button>
+                <button onclick="document.getElementById('settingsModal').classList.remove('show')" class="btn-secondary" style="flex:1; padding:14px;">İptal</button>
+            </div>
+        </div>
+    </div>
+
+
+    <!-- ===== MAIL COMPOSE MODAL (Tekli Gönderim) ===== -->
+    <div id="mailComposeModal" class="modal-overlay">
+        <div class="modal-box" style="max-width:620px; padding:0; overflow:hidden;">
+            <!-- Header -->
+            <div style="background:linear-gradient(135deg,#6d28d9,#4f46e5); padding:22px 28px; display:flex; align-items:center; gap:12px;">
+                <i class="fa-solid fa-envelope-open-text" style="color:white; font-size:1.4rem;"></i>
+                <div>
+                    <div style="color:white; font-weight:700; font-size:1.1rem;">E-Posta Gönder</div>
+                    <div id="mailComposeDocInfo" style="color:rgba(255,255,255,0.75); font-size:0.8rem;"></div>
+                </div>
+                <button onclick="closeMailCompose()" style="margin-left:auto; background:rgba(255,255,255,0.15); border:none; color:white; width:34px; height:34px; border-radius:8px; cursor:pointer; font-size:1rem;"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <!-- Body -->
+            <div style="padding:24px 28px; display:flex; flex-direction:column; gap:16px;">
+                <!-- To -->
+                <div>
+                    <label style="font-size:0.78rem; font-weight:600; color:#64748b; text-transform:uppercase; letter-spacing:0.5px; display:block; margin-bottom:6px;"><i class="fa-solid fa-at"></i> Alıcı E-Posta Adresi</label>
+                    <input id="mailComposeTo" type="email" placeholder="ornek@sirket.com" style="width:100%; padding:10px 14px; border:1.5px solid #e2e8f0; border-radius:8px; font-size:0.95rem; font-family:inherit; box-sizing:border-box; transition:border-color 0.2s;" onfocus="this.style.borderColor='#6d28d9'" onblur="this.style.borderColor='#e2e8f0'">
+                </div>
+                <!-- Subject -->
+                <div>
+                    <label style="font-size:0.78rem; font-weight:600; color:#64748b; text-transform:uppercase; letter-spacing:0.5px; display:block; margin-bottom:6px;"><i class="fa-solid fa-heading"></i> Konu</label>
+                    <input id="mailComposeSubject" type="text" style="width:100%; padding:10px 14px; border:1.5px solid #e2e8f0; border-radius:8px; font-size:0.95rem; font-family:inherit; box-sizing:border-box; transition:border-color 0.2s;" onfocus="this.style.borderColor='#6d28d9'" onblur="this.style.borderColor='#e2e8f0'">
+                </div>
+                <!-- Body -->
+                <div>
+                    <label style="font-size:0.78rem; font-weight:600; color:#64748b; text-transform:uppercase; letter-spacing:0.5px; display:block; margin-bottom:6px;"><i class="fa-solid fa-align-left"></i> Mail Metni</label>
+                    <textarea id="mailComposeBody" rows="7" style="width:100%; padding:12px 14px; border:1.5px solid #e2e8f0; border-radius:8px; font-size:0.9rem; font-family:inherit; resize:vertical; box-sizing:border-box; line-height:1.6; transition:border-color 0.2s;" onfocus="this.style.borderColor='#6d28d9'" onblur="this.style.borderColor='#e2e8f0'"></textarea>
+                </div>
+                <!-- PDF Checkbox -->
+                <div style="display:flex; align-items:center; gap:10px; background:#f8fafc; padding:12px 16px; border-radius:10px; border:1px solid #e2e8f0;">
+                    <input type="checkbox" id="mailComposePdf" checked style="width:16px; height:16px; accent-color:#6d28d9; cursor:pointer;">
+                    <label for="mailComposePdf" style="cursor:pointer; font-size:0.9rem; color:#374151;">
+                        <i class="fa-solid fa-file-pdf" style="color:#dc2626;"></i> PDF belgesini eke ekle
+                    </label>
+                    <span id="mailComposePdfStatus" style="margin-left:auto; font-size:0.78rem; color:#94a3b8;"></span>
+                </div>
+            </div>
+            <!-- Footer -->
+            <div style="padding:16px 28px; background:#f8fafc; border-top:1px solid #e2e8f0; display:flex; gap:12px; justify-content:flex-end;">
+                <button onclick="closeMailCompose()" style="padding:10px 22px; border:1.5px solid #e2e8f0; background:white; border-radius:8px; cursor:pointer; font-weight:600; color:#64748b; font-family:inherit;">İptal</button>
+                <button id="btnMailComposeSend" onclick="submitMailCompose()" style="padding:10px 28px; background:linear-gradient(135deg,#6d28d9,#4f46e5); border:none; border-radius:8px; color:white; font-weight:700; cursor:pointer; font-family:inherit; display:flex; align-items:center; gap:8px;">
+                    <i class="fa-solid fa-paper-plane"></i> Gönder
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ===== TOPLU MAİL MODAL ===== -->
+    <div id="bulkMailModal" class="modal-overlay">
+        <div class="modal-box" style="max-width:760px; padding:0; overflow:hidden;">
+            <!-- Header -->
+            <div style="background:linear-gradient(135deg,#0f766e,#0d9488); padding:22px 28px; display:flex; align-items:center; gap:12px;">
+                <i class="fa-solid fa-envelopes-bulk" style="color:white; font-size:1.4rem;"></i>
+                <div>
+                    <div style="color:white; font-weight:700; font-size:1.1rem;">Toplu E-Posta Gönderimi</div>
+                    <div id="bulkMailInfo" style="color:rgba(255,255,255,0.75); font-size:0.8rem;"></div>
+                </div>
+                <button onclick="closeBulkMailModal()" style="margin-left:auto; background:rgba(255,255,255,0.15); border:none; color:white; width:34px; height:34px; border-radius:8px; cursor:pointer; font-size:1rem;"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <div style="padding:20px 28px 0;">
+                <p style="font-size:0.85rem; color:#64748b; margin:0 0 12px;">Mail adresi eksik veya hatalı olanları hücreye tıklayarak düzeltin. ✅ yeşil = geçerli, ⚠️ sarı = eksik/hatalı.</p>
+                <div style="max-height:380px; overflow-y:auto; border:1px solid #e2e8f0; border-radius:10px;">
+                    <table style="width:100%; border-collapse:collapse; font-size:0.88rem;">
+                        <thead>
+                            <tr style="background:#1e293b; color:white; position:sticky; top:0;">
+                                <th style="padding:12px 14px; text-align:left; border-radius:10px 0 0 0;">Belge No</th>
+                                <th style="padding:12px 14px; text-align:left;">Cari Ünvan</th>
+                                <th style="padding:12px 14px; text-align:left; border-radius:0 10px 0 0; min-width:220px;">E-Posta Adresi</th>
+                            </tr>
+                        </thead>
+                        <tbody id="bulkMailTableBody"></tbody>
+                    </table>
+                </div>
+                <div style="display:flex; gap:20px; padding:14px 0; font-size:0.82rem; color:#64748b;">
+                    <span><span id="bulkMailTotal" style="font-weight:700; color:#1e293b;">0</span> belge</span>
+                    <span><span id="bulkMailOk" style="font-weight:700; color:#059669;">0</span> geçerli adres</span>
+                    <span><span id="bulkMailErr" style="font-weight:700; color:#dc2626;">0</span> eksik/hatalı</span>
+                </div>
+            </div>
+            <div style="padding:16px 28px; background:#f8fafc; border-top:1px solid #e2e8f0; display:flex; gap:12px; justify-content:flex-end; align-items:center;">
+                <span id="bulkMailSendStatus" style="font-size:0.82rem; color:#64748b; flex:1;"></span>
+                <button onclick="closeBulkMailModal()" style="padding:10px 22px; border:1.5px solid #e2e8f0; background:white; border-radius:8px; cursor:pointer; font-weight:600; color:#64748b; font-family:inherit;">İptal</button>
+                <button id="btnBulkMailSend" onclick="executeBulkMail()" style="padding:10px 28px; background:linear-gradient(135deg,#0f766e,#0d9488); border:none; border-radius:8px; color:white; font-weight:700; cursor:pointer; font-family:inherit; display:flex; align-items:center; gap:8px;">
+                    <i class="fa-solid fa-paper-plane"></i> Toplu Gönder
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script src="viewer-app.js"></script>
+</body>
+</html>

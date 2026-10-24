@@ -1,0 +1,53 @@
+# Build Results
+[Dd]ebug/
+[Dd]ebugPublic/
+[Rr]elease/
+[Rr]eleases/
+x64/
+x86/
+[Aa]rms/
+[Aa]rm64/
+bld/
+[Bb]in/
+[Oo]bj/
+[Ll]og/
+[Ll]ogs/
+Publish/
+PublishSelfContained/
+.dotnet/
+
+# Visual Studio files
+.vs/
+*.user
+*.userosscache
+*.suo
+*.userprefs
+*.sln.docstates
+
+# Backups
+*.bak
+*.bak*
+*.backup
+*_backup
+
+# Sensitive Configuration
+appsettings.json
+appsettings.*.json
+!appsettings.example.json
+
+# Sensitive Data / Logs
+*.log
+startup*.log
+startup_error.log
+
+# User Data Storage (Local JSON stores)
+telegram_user_mappings.json
+web_users.json
+custom_reports.json
+report_history.json
+app_permissions.json
+
+# Windows files
+Thumbs.db
+Desktop.ini
+$RECYCLE.BIN/
